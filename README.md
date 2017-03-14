@@ -14,7 +14,7 @@ D1C:/ $ exec app_process /system/bin com.rayworks.droidcast.Main '$@'
 >>> DroidCast main entry
 ```
 
-* Forward `adb` to your pc
+* Use `adb` forward socket connections to your pc
 ```
 $ adb forward tcp:53516 tcp:53516
 ```
