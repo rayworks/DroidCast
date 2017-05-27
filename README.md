@@ -14,12 +14,12 @@ D1C:/ $ exec app_process /system/bin com.rayworks.droidcast.Main '$@'
 >>> DroidCast main entry
 ```
 
-* Use `adb` forward socket connections to your pc
+* Use `adb` forward socket connection from your pc to the connected device
 ```
 $ adb forward tcp:53516 tcp:53516
 ```
 
-* View the image via web browser 
+* View the image via web browser
 http://localhost:53516/screenshot.jpg
 
  ![](/screen-shot.png)
