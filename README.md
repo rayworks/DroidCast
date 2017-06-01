@@ -8,6 +8,9 @@ Usage:
 * Setup the apk properly on the phone
 
 ```
+./gradlew clean installDebug
+```
+```
 $ adb shell
 D1C:/ $ export CLASSPATH=/data/app/com.rayworks.droidcast-1/base.apk
 D1C:/ $ exec app_process /system/bin com.rayworks.droidcast.Main '$@'
