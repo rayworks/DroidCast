@@ -1,6 +1,7 @@
 package com.rayworks.droidcast;
 
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.os.Looper;
 
 import com.koushikdutta.async.AsyncServer;
@@ -42,7 +43,15 @@ public class Main {
         @Override
         public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
             try {
-                Bitmap bitmap = ScreenCaptor.screenshot(360, 640);
+                int w = 360;
+                int h = 640;
+                Point point = DisplayUtil.getCurrentDisplaySize();
+
+                if (point != null && point.x > 0 && point.y > 0) {
+                    w = point.x;
+                    h = point.y;
+                }
+                Bitmap bitmap = ScreenCaptor.screenshot(w, h);
 
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bout);
