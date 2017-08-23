@@ -11,6 +11,7 @@ import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
 import com.koushikdutta.async.http.server.HttpServerRequestCallback;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Locale;
 
 /**
  * Created by seanzhou on 3/14/17.
@@ -39,19 +40,33 @@ public class Main {
         looper.loop();
     }
 
+    static int width = 360;
+    static int height = 640;
+
     static class AnyRequestCallback implements HttpServerRequestCallback {
         @Override
         public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
             try {
-                int w = 360;
-                int h = 640;
                 Point point = DisplayUtil.getCurrentDisplaySize();
 
                 if (point != null && point.x > 0 && point.y > 0) {
-                    w = point.x;
-                    h = point.y;
+                    width = point.x;
+                    height = point.y;
                 }
-                Bitmap bitmap = ScreenCaptor.screenshot(w, h);
+                Bitmap bitmap = ScreenCaptor.screenshot(width, height);
+
+                if (bitmap == null) {
+                    System.out.println(String.format(Locale.ENGLISH,
+                            ">>> failed to generate image with resolution %d:%d", width, height));
+
+                    width /= 2;
+                    height /= 2;
+
+                    bitmap = ScreenCaptor.screenshot(width, height);
+                }
+
+                System.out.println(String.format(Locale.ENGLISH,
+                        "Bitmap generated with resolution %d:%d", width, height));
 
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bout);
