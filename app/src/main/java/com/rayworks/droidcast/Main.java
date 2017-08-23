@@ -3,6 +3,7 @@ package com.rayworks.droidcast;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Looper;
+import android.os.Process;
 
 import com.koushikdutta.async.AsyncServer;
 import com.koushikdutta.async.http.server.AsyncHttpServer;
@@ -37,21 +38,27 @@ public class Main {
         httpServer.get("/screenshot.jpg", new AnyRequestCallback());
         httpServer.listen(server, 53516);
 
-        looper.loop();
+        Looper.loop();
     }
 
-    static int width = 360;
-    static int height = 640;
+    static int width = 0;
+    static int height = 0;
 
     static class AnyRequestCallback implements HttpServerRequestCallback {
         @Override
         public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
             try {
-                Point point = DisplayUtil.getCurrentDisplaySize();
+                if (width == 0 || height == 0) {
+                    // dimension initialization
+                    Point point = DisplayUtil.getCurrentDisplaySize();
 
-                if (point != null && point.x > 0 && point.y > 0) {
-                    width = point.x;
-                    height = point.y;
+                    if (point != null && point.x > 0 && point.y > 0) {
+                        width = point.x;
+                        height = point.y;
+                    } else {
+                        width = 360;
+                        height = 640;
+                    }
                 }
                 Bitmap bitmap = ScreenCaptor.screenshot(width, height);
 
@@ -66,7 +73,8 @@ public class Main {
                 }
 
                 System.out.println(String.format(Locale.ENGLISH,
-                        "Bitmap generated with resolution %d:%d", width, height));
+                        "Bitmap generated with resolution %d:%d, process id %d | thread id %d",
+                        width, height, Process.myPid(), Process.myTid()));
 
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bout);
