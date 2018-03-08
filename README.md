@@ -5,17 +5,21 @@ An experimental demo for capturing and displaying screenshot of Android devices.
 Usage:
 ------
 
-* Setup the apk properly on the phone
+* Install the apk properly on the phone
 
 ```
 ./gradlew clean installDebug
 ```
+
+* Start our internal server process for image processing by `app_process`  
 ```
 $ adb shell
 D1C:/ $ export CLASSPATH=/data/app/com.rayworks.droidcast-1/base.apk
 D1C:/ $ exec app_process /system/bin com.rayworks.droidcast.Main '$@'
 >>> DroidCast main entry
 ```
+
+![](/process_main.png)
 
 * Use `adb` forward socket connection from your pc to the connected device
 ```
