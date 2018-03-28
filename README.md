@@ -11,10 +11,15 @@ Usage:
 ./gradlew clean installDebug
 ```
 
+* Push the apk to the `tmp` folder
+```
+adb push ${your-project-path}/DroidCast/app/build/outputs/apk/debug/DroidCast-debug-1.0.apk /data/local/tmp
+```
+
 * Start our internal server process for image processing by `app_process`  
 ```
 $ adb shell
-D1C:/ $ export CLASSPATH=/data/app/com.rayworks.droidcast-1/base.apk
+D1C:/ $ export CLASSPATH=/data/local/tmp/DroidCast-debug-1.0.apk
 D1C:/ $ exec app_process /system/bin com.rayworks.droidcast.Main '$@'
 >>> DroidCast main entry
 ```
