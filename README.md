@@ -2,8 +2,12 @@
 
 An experimental demo for capturing and displaying screenshot of Android devices.
 
-Usage:
-------
+
+### Note:
+For the "Unix-like" OS, once apk file generated, you can use the [cmd_tool](/cmd_tool/cmd_runner.c) to simplify the 
+following `adb` related operations. 
+
+## Usage:
 
 * Install the apk properly on the phone
 
@@ -37,8 +41,8 @@ http://localhost:53516/screenshot.jpg
  ![](/screen-shot.png)
 
 
-Reference: <br>
-------
+## Reference: <br>
+
 [vysor原理以及Android同屏方案](http://zke1ev3n.me/2016/07/02/vysor%E5%8E%9F%E7%90%86%E4%BB%A5%E5%8F%8AAndroid%E5%90%8C%E5%B1%8F%E6%96%B9%E6%A1%88/)
 
 ## License
