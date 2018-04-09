@@ -5,12 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 static const char *adb_command;
 
 static char *apkname;
 
-const char *const fwd_cmd[] = {"forward", "tcp:53516", "tcp:53516"};
+static const char *const fwd_cmd[] = {"forward", "tcp:53516", "tcp:53516"};
+
+static const char *const un_fwd_cmd[] = {"forward", "--remove", "tcp:53516"};
 
 static const char *remote = "/data/local/tmp/";
 
@@ -122,6 +125,48 @@ void filter_apk(char *full_path)
     }
 }
 
+void wait_for_child_process(pid_t proc, char *p_cmd)
+{
+    int exit_code;
+    if (!cmd_simple_wait(proc, &exit_code))
+    {
+        if (exit_code != -1)
+        {
+            printf("Cmd \'%s\' : return value %d\n", p_cmd, exit_code);
+        }
+        else
+        {
+            printf("Cmd \'%s\' : exited unexpectedly\n", p_cmd);
+        }
+
+        perror(p_cmd);
+        exit(-1);
+    }
+    else
+    {
+        printf("Cmd \'%s\' executed successfully\n", p_cmd);
+    }
+}
+
+static void handler(int sig)
+{
+    static int count = 0;
+
+    /*
+        UNSAFE: Non-async-signal-safe functions used.
+     */
+    if (sig == SIGCHLD)
+    {
+        count++;
+        printf("Caught SIGCHLD : %d time(s) \n", count);
+
+        pid_t proc = adb_execute(NULL, un_fwd_cmd, ARRAY_LEN(un_fwd_cmd));
+        wait_for_child_process(proc, "adb undo forward");
+
+        exit(EXIT_SUCCESS);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 2)
@@ -133,46 +178,29 @@ int main(int argc, char *argv[])
     char *local = argv[1];
     filter_apk(local);
 
-    int exit_code;
-
     const char *const push_cmd[] = {"push", local, remote};
     pid_t proc_push = adb_execute(NULL, push_cmd, ARRAY_LEN(push_cmd));
-    if (!cmd_simple_wait(proc_push, &exit_code))
-    {
-        perror("adb push\n");
-        exit(-1);
-    }
+    wait_for_child_process(proc_push, "adb push");
 
     pid_t proc = adb_execute(NULL, fwd_cmd, ARRAY_LEN(fwd_cmd));
-    if (!cmd_simple_wait(proc, &exit_code))
-    {
-        if (exit_code != -1)
-        {
-            printf("adb forward : return value %d\n", exit_code);
-        }
-        else
-        {
-            printf("adb forward : exited unexpectedly\n");
-        }
-    }
-    else
-    {
-        printf("adb forward : configured successfully.\n");
-    }
+    wait_for_child_process(proc, "adb forward");
 
     char class_path[108];
     snprintf(class_path, sizeof(class_path), "CLASSPATH=%s%s", remote, apkname);
     printf("> full class path: %s\n", class_path);
 
+    // setup the handler for monitoring the core child process quitting
+    signal(SIGCHLD, handler);
+
     const char *const cmd[] = {
         "shell",
-        //"CLASSPATH=/data/local/tmp/DroidCast-debug-1.0.apk",
         class_path,
         "app_process",
         "/", // unused
         "com.rayworks.droidcast.Main"};
 
-    adb_execute(NULL, cmd, ARRAY_LEN(cmd));
+    proc = adb_execute(NULL, cmd, ARRAY_LEN(cmd));
+    wait_for_child_process(proc, "adb cmd runner");
 
     exit(EXIT_SUCCESS);
 }
