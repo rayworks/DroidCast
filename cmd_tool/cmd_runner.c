@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
 
 static const char *adb_command;
 
@@ -157,13 +158,35 @@ static void handler(int sig)
      */
     if (sig == SIGCHLD)
     {
+        // reset
+        signal(SIGCHLD, SIG_DFL);
+
+        int status;
+        pid_t child_proc;
+        if ((child_proc = waitpid(-1, &status, 0)) > 0)
+        {
+            printf("handler : Reaped child %ld\n", (long)child_proc);
+            if (WIFEXITED(status))
+            {
+                printf("child exited, with status : %d\n", WEXITSTATUS(status));
+            }
+            else if (WIFSIGNALED(status))
+            { // not reached ?!
+                printf("child killed by signal %d (%s)\n", WTERMSIG(status), strsignal(WTERMSIG(status)));
+            }
+        }
+        else
+        {
+
+            perror("waitpid error");
+            exit(EXIT_FAILURE);
+        }
+
         count++;
         printf("Caught SIGCHLD : %d time(s) \n", count);
 
         pid_t proc = adb_execute(NULL, un_fwd_cmd, ARRAY_LEN(un_fwd_cmd));
         wait_for_child_process(proc, "adb undo forward");
-
-        exit(EXIT_SUCCESS);
     }
 }
 
@@ -200,7 +223,26 @@ int main(int argc, char *argv[])
         "com.rayworks.droidcast.Main"};
 
     proc = adb_execute(NULL, cmd, ARRAY_LEN(cmd));
-    wait_for_child_process(proc, "adb cmd runner");
+
+    int status;
+    pid_t childPid;
+    while ((childPid = waitpid(-1, &status, 0)) > 0)
+    {
+        continue;
+    }
+
+    if (childPid == -1)
+    {
+        if (errno == ECHILD)
+        {
+            printf("No more child process to be waiting, main process exiting now.\n");
+        }
+        else
+        {
+            perror("waitpid");
+            exit(EXIT_FAILURE);
+        }
+    }
 
     exit(EXIT_SUCCESS);
 }
