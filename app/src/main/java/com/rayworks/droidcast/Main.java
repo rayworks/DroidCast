@@ -14,20 +14,21 @@ import com.koushikdutta.async.http.server.HttpServerRequestCallback;
 import java.io.ByteArrayOutputStream;
 import java.util.Locale;
 
-/**
- * Created by seanzhou on 3/14/17.
- */
-
+/** Created by seanzhou on 3/14/17. */
 public class Main {
     static Looper looper;
+    static int width = 0;
+    static int height = 0;
 
     public static void main(String[] args) {
-        AsyncHttpServer httpServer = new AsyncHttpServer() {
-            @Override
-            protected boolean onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
-                return super.onRequest(request, response);
-            }
-        };
+        AsyncHttpServer httpServer =
+                new AsyncHttpServer() {
+                    @Override
+                    protected boolean onRequest(
+                            AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
+                        return super.onRequest(request, response);
+                    }
+                };
 
         Looper.prepare();
 
@@ -40,9 +41,6 @@ public class Main {
 
         Looper.loop();
     }
-
-    static int width = 0;
-    static int height = 0;
 
     static class AnyRequestCallback implements HttpServerRequestCallback {
         @Override
@@ -63,8 +61,12 @@ public class Main {
                 Bitmap bitmap = ScreenCaptor.screenshot(width, height);
 
                 if (bitmap == null) {
-                    System.out.println(String.format(Locale.ENGLISH,
-                            ">>> failed to generate image with resolution %d:%d", width, height));
+                    System.out.println(
+                            String.format(
+                                    Locale.ENGLISH,
+                                    ">>> failed to generate image with resolution %d:%d",
+                                    width,
+                                    height));
 
                     width /= 2;
                     height /= 2;
@@ -72,14 +74,23 @@ public class Main {
                     bitmap = ScreenCaptor.screenshot(width, height);
                 }
 
-                System.out.println(String.format(Locale.ENGLISH,
-                        "Bitmap generated with resolution %d:%d, process id %d | thread id %d",
-                        width, height, Process.myPid(), Process.myTid()));
+                System.out.println(
+                        String.format(
+                                Locale.ENGLISH,
+                                "Bitmap generated with resolution %d:%d, process id %d | thread id %d",
+                                width,
+                                height,
+                                Process.myPid(),
+                                Process.myTid()));
 
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bout);
                 bout.flush();
                 response.send("image/jpeg", bout.toByteArray());
+
+                // "Make sure to call Bitmap.recycle() as soon as possible, once its content is not
+                // needed anymore."
+                bitmap.recycle();
 
             } catch (Exception e) {
                 response.code(500);
