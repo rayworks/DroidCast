@@ -8,13 +8,10 @@ import android.view.IWindowManager;
 
 import java.lang.reflect.Method;
 
-/**
- * Created by Sean on 5/27/17.
- */
-
+/** Created by Sean on 5/27/17. */
 public final class DisplayUtil {
-    /***
-     * Retrieves the device actual display size.
+    /**
+     * * Retrieves the device actual display size.
      *
      * @return {@link Point}
      */
@@ -31,10 +28,9 @@ public final class DisplayUtil {
             Object localObject = IWindowManager.Stub.asInterface((IBinder) ws);
             IWindowManager iWindowManager = (IWindowManager) localObject;
 
+            // Resolve the screen resolution for devices with OS version 4.3+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 iWindowManager.getInitialDisplaySize(0, localPoint);
-            } else {
-                iWindowManager.getRealDisplaySize(localPoint);
             }
 
             System.out.println(">>> Dimension: " + localPoint);

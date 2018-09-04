@@ -54,8 +54,8 @@ public class Main {
                         width = point.x;
                         height = point.y;
                     } else {
-                        width = 360;
-                        height = 640;
+                        width = 480;
+                        height = 800;
                     }
                 }
                 Bitmap bitmap = ScreenCaptor.screenshot(width, height);
