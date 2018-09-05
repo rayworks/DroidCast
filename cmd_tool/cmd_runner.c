@@ -8,6 +8,8 @@
 #include <signal.h>
 #include <errno.h>
 
+#include "./error_printer.h"
+
 static const char *adb_command;
 
 static char *apkname;
@@ -21,6 +23,19 @@ static const char *remote = "/data/local/tmp/";
 /* methods taken and modified from https://github.com/Genymobile/scrcpy/ */
 
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
+
+#define BUF_SIZE 1024
+
+// NB: About setting the ClassPath environment, there is a case that '/data/local/tmp/' doesn't have
+// the 'x' permission on some devices. so we retrieve the apk source path via
+// 'adb shell pm path your-pkg-name'.
+static const char *apk_src_path = NULL;
+
+static void sig_pipe(int id)
+{
+    printf("SIGPIPE caught\n");
+    exit(1);
+}
 
 static inline const char *get_adb_command()
 {
@@ -190,6 +205,100 @@ static void handler(int sig)
     }
 }
 
+void retrieve_src_apk_path()
+{
+    int fd[2];
+    pid_t pid;
+
+    char line[MAXLINE];
+
+    if (signal(SIGPIPE, sig_pipe) == SIG_ERR) {
+        err_sys("signal error");
+    }
+
+    if (pipe(fd) < 0)
+        err_sys("pipe error");
+
+    if ((pid = fork()) < 0) {
+        err_sys("fork error");
+    } else if (pid > 0) { //parent
+        close(fd[1]); // out closed for parent
+
+        char buffer[BUF_SIZE];
+
+        char result[BUF_SIZE];
+        memset(result, 0, BUF_SIZE);
+
+        int readCnt = 0;
+        while (1) {
+            ssize_t count = read(fd[0], buffer, sizeof (buffer));
+            printf("bytes %ld read from pipe\n", count);
+
+            if (count == -1) {
+                if (errno == EINTR) {
+                    continue;
+                } else {
+                    perror("read");
+                    exit(1);
+                }
+            } else if (count == 0) {
+                break;
+            } else {
+                // NB: the read content could be discontinue, so gather all the content first
+                char* ptr = result;
+
+                strncpy(ptr + readCnt, buffer, count);
+                readCnt += count;
+            }
+        }
+
+        if (readCnt > 0) {
+            // format like:
+            // package:/data/app/com.rayworks.droidcast-Tb1-e8DHFvuQ1wI6_MlLww==/base.apk
+
+            char* pstart = strchr(result, ':');
+            pstart++;
+
+            char* pend = strrchr(result, 'k'); // "*.apk"
+            printf("filter string : %s", result);
+
+            char* pstr = (char*) malloc((pend - pstart + 2) * sizeof (char));
+            memcpy(pstr, pstart, pend - pstart + 1);
+            pstr[pend - pstart + 2] = 0; // terminate added
+
+            apk_src_path = pstr;
+
+            printf("Target path is : %s\n", apk_src_path);
+        }
+
+        close(fd[0]);
+
+        wait(NULL);
+
+    } else {
+        if (fd[1] != STDOUT_FILENO) {
+            if (dup2(fd[1], STDOUT_FILENO) != STDOUT_FILENO) {
+                err_sys("dup2 error to stdout");
+            }
+            close(fd[1]);
+            close(fd[0]);
+        }
+
+        const char *const cmd[] = {
+                    "shell",
+                    "pm",
+                    "path",
+                    "com.rayworks.droidcast"
+                };
+         pid_t proc = adb_execute(NULL, cmd, ARRAY_LEN(cmd));
+         wait(NULL);
+
+         printf("child proc existing\n");
+
+         exit(EXIT_SUCCESS);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 2)
@@ -208,8 +317,14 @@ int main(int argc, char *argv[])
     pid_t proc = adb_execute(NULL, fwd_cmd, ARRAY_LEN(fwd_cmd));
     wait_for_child_process(proc, "adb forward");
 
-    char class_path[108];
-    snprintf(class_path, sizeof(class_path), "CLASSPATH=%s%s", remote, apkname);
+    retrieve_src_apk_path();
+
+    char class_path[256];
+    if(apk_src_path) {
+        snprintf(class_path, sizeof(class_path), "CLASSPATH=%s", apk_src_path);
+    }else {
+        snprintf(class_path, sizeof(class_path), "CLASSPATH=%s%s", remote, apkname);
+    }
     printf("> full class path: %s\n", class_path);
 
     // setup the handler for monitoring the core child process quitting
