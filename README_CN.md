@@ -28,6 +28,11 @@ D1C:/ $ exec app_process /system/bin com.rayworks.droidcast.Main '$@'
 
 ![](/process_main.png)
 
+* 请注意: 在某些设备上, 如果你碰到类似 "appproc: ERROR: could not find class 'com.rayworks.droidcast.Main'的错误，
+请把上面shell 命令中的 `CLASSPATH` 值替换为执行命令 `adb shell pm path com.rayworks.droidcast` 后的实际返回值。
+
+![](/apk_src_path.png)
+
 * 使用 `adb forward` 命令将本地（PC）`socket` 连接重定向到远端已连接的设备（手机）上。
 ```
 $ adb forward tcp:53516 tcp:53516
