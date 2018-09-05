@@ -28,12 +28,13 @@ D1C:/ $ exec app_process /system/bin com.rayworks.droidcast.Main '$@'
 >>> DroidCast main entry
 ```
 
+![](/process_main.png)
+
 * Please note: On some devices, 
 if you got the error "appproc: ERROR: could not find class 'com.rayworks.droidcast.Main', please replace the 
 above value of `CLASSPATH` with the result returned by `adb shell pm path com.rayworks.droidcast`.
-![](/apk_src_path.png)
 
-![](/process_main.png)
+![](/apk_src_path.png)
 
 * Use `adb` forward socket connection from your pc to the connected device
 ```
