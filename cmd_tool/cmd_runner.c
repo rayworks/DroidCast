@@ -26,9 +26,9 @@ static const char *remote = "/data/local/tmp/";
 
 #define BUF_SIZE 1024
 
-// NB: About setting the ClassPath environment, there is a case that '/data/local/tmp/' doesn't have
-// the 'x' permission on some devices. so we retrieve the apk source path via
-// 'adb shell pm path your-pkg-name'.
+// NB: Give that the target apk/dex file has been pushed into '/data/local/tmp/' on the device, it's
+// still possible to get an error about "could not find class 'com.rayworks.droidcast.Main'". so we
+// retrieve the apk source path via 'adb shell pm path your-pkg-name'.
 static const char *apk_src_path = NULL;
 
 static void sig_pipe(int id)
@@ -244,7 +244,7 @@ void retrieve_src_apk_path()
             } else if (count == 0) {
                 break;
             } else {
-                // NB: the read content could be discontinue, so gather all the content first
+                // NB: the read content could be discontinued, so gather all the content first
                 char* ptr = result;
 
                 strncpy(ptr + readCnt, buffer, count);
