@@ -24,7 +24,7 @@ static const char *remote = "/data/local/tmp/";
 
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
 
-#define BUF_SIZE 1024
+#define BUF_SIZE 1024*2
 
 // NB: Give that the target apk/dex file has been pushed into '/data/local/tmp/' on the device, it's
 // still possible to get an error about "could not find class 'com.rayworks.droidcast.Main'". so we
@@ -259,7 +259,10 @@ void retrieve_src_apk_path()
             char* pstart = strchr(result, ':');
             pstart++;
 
-            char* pend = strrchr(result, 'k'); // "*.apk"
+            const char* pBaseApk = "base.apk";
+            char* pend = strstr(result, pBaseApk);
+            pend += strlen(pBaseApk) - 1;
+
             printf("filter string : %s", result);
 
             char* pstr = (char*) malloc((pend - pstart + 2) * sizeof (char));
