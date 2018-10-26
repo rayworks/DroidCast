@@ -1,15 +1,16 @@
 # DroidCast
 
-An experimental demo for capturing and displaying screenshot of Android devices.
 [中文文档](/README_CN.md)
+
+An experimental demo for capturing and displaying screenshot of Android devices.
 
 
 ### Note:
-For the "Unix-like" OS, once apk file generated, you can use the [cmd_tool](/cmd_tool/cmd_runner.c) to simplify the following `adb` related operations. 
+For the "Unix-like" OS, once apk file installed, you can use the [cmd_tool](/cmd_tool/cmd_runner.c) to simplify the following `adb` related operations.
 
 ## Usage:
 
-* Install the apk properly on the phone
+* Install the apk properly on the phone (Don't install it via `Run 'app'` from Android Studio).
 
 ```
 ./gradlew clean installDebug

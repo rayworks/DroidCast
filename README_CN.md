@@ -3,11 +3,11 @@
 
 
 ### 备注:
-如果开发环境是类 `Unix` 的操作系统，一旦APK文件生成，你可以使用 [命令行工具](/cmd_tool/cmd_runner.c) 来简化以下 `adb` 命令相关的操作. 
+如果开发环境是类 `Unix` 的操作系统，一旦APK安装完成，你可以使用 [命令行工具](/cmd_tool/cmd_runner.c) 来简化以下 `adb` 命令相关的操作.
 
 ## 使用说明:
 
-* 在手机上安装 apk
+* 执行以下命令在手机上安装 apk （不要通过 Android Studio  `Run 'app'` 来安装）
 
 ```
 ./gradlew clean installDebug
