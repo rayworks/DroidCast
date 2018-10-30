@@ -1,11 +1,20 @@
 # DroidCast
 在 Android 设备上截屏并在PC上显示屏幕图像的一个实验性项目。
 
+## 同网段 WIFI 环境下无线配置使用：
+* 获取设备IP地址 (设置-系统-关于手机-状态) e.g : `192.168.x.x`
+* 在设备上配置启用adb 的 TCP/IP 模式 : `adb tcpip 5555`
+* 连接你的设备 : `adb connect 192.168.x.x:5555`(替换`192.168.x.x`为设备实际IP)
+* 拔掉USB连接线
+* 按下面的 [一般（USB 连线）使用说明](#usage) 中的步骤完成设置
+
+如需重置为默认的USB模式，请执行 : `adb usb`
+
+<h2 id="usage">一般（USB 连线）使用说明:</h2>
 
 ### 备注:
 如果开发环境是类 `Unix` 的操作系统，一旦APK安装完成，你可以使用 [命令行工具](/cmd_tool/cmd_runner.c) 来简化以下 `adb` 命令相关的操作.
 
-## 使用说明:
 
 * 执行以下命令在手机上安装 apk （不要通过 Android Studio  `Run 'app'` 来安装）
 
@@ -52,7 +61,8 @@ http://localhost:53516/screenshot.jpg
 
 ## License
 
-```Copyright (C) 2018 rayworks
+```
+Copyright (C) 2018 rayworks
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

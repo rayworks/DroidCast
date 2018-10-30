@@ -4,11 +4,19 @@
 
 An experimental demo for capturing and displaying screenshot of Android devices.
 
+## Required configuration to run it wirelessly :
 
+* Get your device IP address (in Settings - System - About phone - Status) e.g : `192.168.x.x`
+* Enable adb over TCP/IP on your device: `adb tcpip 5555`
+* Connect to your device: `adb connect 192.168.x.x:5555` (replace `192.168.x.x` with the actual IP address)
+* Unplug your device
+* Go through all the steps under [Common usage](#usage)
+
+To switch back to USB mode: `adb usb`.
+
+<h2 id="usage">Common usage:</h2>
 ### Note:
 For the "Unix-like" OS, once apk file installed, you can use the [cmd_tool](/cmd_tool/cmd_runner.c) to simplify the following `adb` related operations.
-
-## Usage:
 
 * Install the apk properly on the phone (Don't install it via `Run 'app'` from Android Studio).
 
