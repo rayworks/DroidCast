@@ -13,7 +13,7 @@
 <h2 id="usage">一般（USB 连线）使用说明:</h2>
 
 ### 备注:
-如果开发环境是类 `Unix` 的操作系统，一旦APK安装完成，你可以使用 [命令行工具](/cmd_tool/cmd_runner.c) 来简化以下 `adb` 命令相关的操作.
+如果开发环境是类 `Unix` 的操作系统，一旦APK安装完成，你可以使用 [命令行工具](/cmd_tool/cmd_runner.c) 来自动化完成以下 `adb` 命令相关的操作.
 
 
 * 执行以下命令在手机上安装 apk （不要通过 Android Studio  `Run 'app'` 来安装）
