@@ -205,6 +205,8 @@ static void handler(int sig)
     }
 }
 
+// Use a pipe to communicate between a parent and child process (via Android Package Manager) for
+// retrieving the actual installed apk path.
 void retrieve_src_apk_path()
 {
     int fd[2];
@@ -267,7 +269,7 @@ void retrieve_src_apk_path()
 
             char* pstr = (char*) malloc((pend - pstart + 2) * sizeof (char));
             memcpy(pstr, pstart, pend - pstart + 1);
-            pstr[pend - pstart + 2] = 0; // terminate added
+            pstr[pend - pstart + 2] = 0; // terminator added
 
             apk_src_path = pstr;
 

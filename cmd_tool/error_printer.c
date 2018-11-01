@@ -4,10 +4,6 @@
 
 #include "error_printer.h"
 
-//#define BUF_SIZE 4096
-
-//#define ADB "/Users/Shirley/Documents/develop/android-dev/android_sdk/platform-tools/adb"
-
 char* strerror(int error) {
     static char mesg[30];
 
@@ -22,8 +18,7 @@ char* strerror(int error) {
  * Print a message and return to caller.
  * Caller specifies "errnoflag".
  */
-static void
-err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
+static void err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
     char buf[MAXLINE];
 
     vsnprintf(buf, MAXLINE - 1, fmt, ap);
@@ -40,8 +35,7 @@ err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
  * Nonfatal error unrelated to a system call.
  * Print a message and return.
  */
-void
-err_msg(const char *fmt, ...) {
+void err_msg(const char *fmt, ...) {
     va_list ap;
 
     va_start(ap, fmt);
@@ -53,8 +47,7 @@ err_msg(const char *fmt, ...) {
  * Fatal error related to a system call.
  * Print a message and terminate.
  */
-void
-err_sys(const char *fmt, ...) {
+void err_sys(const char *fmt, ...) {
     va_list ap;
 
     va_start(ap, fmt);
