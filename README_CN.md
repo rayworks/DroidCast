@@ -49,6 +49,7 @@ $ adb forward tcp:53516 tcp:53516
 
 * 在 PC 上打开浏览器查看截图
 http://localhost:53516/screenshot.jpg
+或者按指定的图片大小查看，如 http://localhost:53516/screenshot.jpg?width=1080&height=1920
 
  ![](/screen-shot.png)
 

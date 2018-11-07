@@ -4,8 +4,10 @@ import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Looper;
 import android.os.Process;
+import android.text.TextUtils;
 
 import com.koushikdutta.async.AsyncServer;
+import com.koushikdutta.async.http.Multimap;
 import com.koushikdutta.async.http.server.AsyncHttpServer;
 import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
 import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
@@ -46,40 +48,53 @@ public class Main {
         @Override
         public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
             try {
-                if (width == 0 || height == 0) {
+                Multimap pairs = request.getQuery();
+
+                String width = pairs.getString("width");
+                String height = pairs.getString("height");
+                System.out.println(pairs);
+
+                if (!TextUtils.isEmpty(width) && !TextUtils.isEmpty(height)) {
+                    if (TextUtils.isDigitsOnly(width) && TextUtils.isDigitsOnly(height)) {
+                        Main.width = Integer.parseInt(width);
+                        Main.height = Integer.parseInt(height);
+                    }
+                }
+
+                if (Main.width == 0 || Main.height == 0) {
                     // dimension initialization
                     Point point = DisplayUtil.getCurrentDisplaySize();
 
                     if (point != null && point.x > 0 && point.y > 0) {
-                        width = point.x;
-                        height = point.y;
+                        Main.width = point.x;
+                        Main.height = point.y;
                     } else {
-                        width = 480;
-                        height = 800;
+                        Main.width = 480;
+                        Main.height = 800;
                     }
                 }
-                Bitmap bitmap = ScreenCaptor.screenshot(width, height);
+                Bitmap bitmap = ScreenCaptor.screenshot(Main.width, Main.height);
 
                 if (bitmap == null) {
                     System.out.println(
                             String.format(
                                     Locale.ENGLISH,
                                     ">>> failed to generate image with resolution %d:%d",
-                                    width,
-                                    height));
+                                    Main.width,
+                                    Main.height));
 
-                    width /= 2;
-                    height /= 2;
+                    Main.width /= 2;
+                    Main.height /= 2;
 
-                    bitmap = ScreenCaptor.screenshot(width, height);
+                    bitmap = ScreenCaptor.screenshot(Main.width, Main.height);
                 }
 
                 System.out.println(
                         String.format(
                                 Locale.ENGLISH,
                                 "Bitmap generated with resolution %d:%d, process id %d | thread id %d",
-                                width,
-                                height,
+                                Main.width,
+                                Main.height,
                                 Process.myPid(),
                                 Process.myTid()));
 
