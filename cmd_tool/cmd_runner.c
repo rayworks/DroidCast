@@ -268,8 +268,8 @@ void retrieve_src_apk_path()
             printf("filter string : %s", result);
 
             char* pstr = (char*) malloc((pend - pstart + 2) * sizeof (char));
+            pstr[pend - pstart + 1] = 0; // terminator added
             memcpy(pstr, pstart, pend - pstart + 1);
-            pstr[pend - pstart + 2] = 0; // terminator added
 
             apk_src_path = pstr;
 
