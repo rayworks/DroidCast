@@ -258,20 +258,6 @@ void retrieve_src_apk_path()
         if (readCnt > 0) {
             // format like:
             // package:/data/app/com.rayworks.droidcast-Tb1-e8DHFvuQ1wI6_MlLww==/base.apk
-
-            /*char* pstart = strchr(result, ':');
-            pstart++;
-
-            const char* pBaseApk = "base.apk";
-            char* pend = strstr(result, pBaseApk);
-            pend += strlen(pBaseApk) - 1;
-
-            printf("filter string : %s", result);
-
-            char* pstr = (char*) malloc((pend - pstart + 2) * sizeof (char));
-            pstr[pend - pstart + 1] = 0; // terminator added
-            memcpy(pstr, pstart, pend - pstart + 1);*/
-
             apk_src_path = filter_apk_path(result);
 
             printf("Target path is : %s\n", apk_src_path);
