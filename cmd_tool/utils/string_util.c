@@ -9,6 +9,9 @@ char* filter_apk_path(char* result) {
     // package:/data/app/com.rayworks.droidcast-Tb1-e8DHFvuQ1wI6_MlLww==/base.apk
 
     char* pstart = strchr(result, ':');
+    if(!pstart)
+        return NULL;
+    
     pstart++;
 
     const char* pBaseApk = "base.apk";

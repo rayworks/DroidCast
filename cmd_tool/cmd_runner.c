@@ -107,41 +107,6 @@ int cmd_simple_wait(pid_t pid, int *exit_code)
     return !code;
 }
 
-void error_input()
-{
-    printf("Usage : ./prog [FULLPATH-TO-YOUR-APK-FILE]\n");
-    exit(-1);
-}
-
-void filter_apk(char *full_path)
-{
-    char *segment = strrchr(full_path, '/');
-
-    if (segment)
-    {
-        char *postfix = strstr(segment, ".apk");
-        if (!postfix)
-        {
-            error_input();
-        }
-        else
-        {
-            char *ptr = segment;
-            int length = (int)strlen(segment);
-            apkname = (char *)malloc(sizeof(char) * length);
-            memcpy(apkname, ++ptr, length - 1);
-
-            *(apkname + (length - 1)) = '\0';
-
-            printf("> final apk name : '%s'\n", apkname);
-        }
-    }
-    else
-    {
-        error_input();
-    }
-}
-
 void wait_for_child_process(pid_t proc, char *p_cmd)
 {
     int exit_code;
@@ -259,6 +224,10 @@ void retrieve_src_apk_path()
             // format like:
             // package:/data/app/com.rayworks.droidcast-Tb1-e8DHFvuQ1wI6_MlLww==/base.apk
             apk_src_path = filter_apk_path(result);
+            if(!apk_src_path){
+                err_msg("Fatal error: Apk path can't be retrieved, Have you installed the app successfully?");
+                exit(-1);
+            }
 
             printf("Target path is : %s\n", apk_src_path);
         }
@@ -293,23 +262,10 @@ void retrieve_src_apk_path()
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
-    {
-        // e.g /apk/debug/DroidCast-debug-1.0.apk
-        error_input();
-    }
-
-    char *local = argv[1];
-    filter_apk(local);
-
-    const char *const push_cmd[] = {"push", local, remote};
-    pid_t proc_push = adb_execute(NULL, push_cmd, ARRAY_LEN(push_cmd));
-    wait_for_child_process(proc_push, "adb push");
-
+    retrieve_src_apk_path();
+    
     pid_t proc = adb_execute(NULL, fwd_cmd, ARRAY_LEN(fwd_cmd));
     wait_for_child_process(proc, "adb forward");
-
-    retrieve_src_apk_path();
 
     char class_path[256];
     if(apk_src_path) {
