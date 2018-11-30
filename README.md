@@ -17,7 +17,7 @@ To switch back to USB mode: `adb usb`.
 <h2 id="usage">Common usage:</h2>
 
 ### Note:
-For the "Unix-like" OS, once apk file installed, you can use the [cmd_tool](/cmd_tool/cmd_runner.c) to automate the following `adb` related operations.
+For the "Unix-like" OS, once apk file installed, you can use the [cmd_tool](/cmd_tool/cmd_runner.c#L263) to automate the following `adb` related operations.
 
 * Install the apk properly on the phone (Don't install it via `Run 'app'` from Android Studio).
 
