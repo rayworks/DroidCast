@@ -287,6 +287,8 @@ int main(int argc, char *argv[])
 
     proc = adb_execute(NULL, cmd, ARRAY_LEN(cmd));
 
+    system("open http://localhost:53516/screenshot.jpg");
+
     int status;
     pid_t childPid;
     while ((childPid = waitpid(-1, &status, 0)) > 0)
