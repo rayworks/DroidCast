@@ -52,7 +52,6 @@ public class Main {
 
                 String width = pairs.getString("width");
                 String height = pairs.getString("height");
-                System.out.println(pairs);
 
                 if (!TextUtils.isEmpty(width) && !TextUtils.isEmpty(height)) {
                     if (TextUtils.isDigitsOnly(width) && TextUtils.isDigitsOnly(height)) {
