@@ -168,6 +168,10 @@ static void handler(int sig)
 
         pid_t proc = adb_execute(NULL, un_fwd_cmd, ARRAY_LEN(un_fwd_cmd));
         wait_for_child_process(proc, "adb undo forward");
+    } else if (sig == SIGALRM) {
+        signal(SIGALRM, SIG_DFL);
+
+        system("open http://localhost:53516/screenshot.jpg");
     }
 }
 
@@ -260,6 +264,16 @@ void retrieve_src_apk_path()
     }
 }
 
+void sleep_ext(unsigned int seconds, void (*func)(int)) {
+    if(signal(SIGALRM, func) == SIG_ERR) {
+        perror("error : signal SIGALRM");
+        exit(EXIT_FAILURE);
+    }
+
+    alarm(seconds);
+    pause(); /* next caught signal will wake this up */
+}
+
 int main(int argc, char *argv[])
 {
     retrieve_src_apk_path();
@@ -276,7 +290,10 @@ int main(int argc, char *argv[])
     printf("> full class path: %s\n", class_path);
 
     // setup the handler for monitoring the core child process quitting
-    signal(SIGCHLD, handler);
+    if(signal(SIGCHLD, handler) == SIG_ERR) {
+        perror("error: signal SIGCHLD");
+        exit(EXIT_FAILURE);
+    }
 
     const char *const cmd[] = {
         "shell",
@@ -287,7 +304,8 @@ int main(int argc, char *argv[])
 
     proc = adb_execute(NULL, cmd, ARRAY_LEN(cmd));
 
-    system("open http://localhost:53516/screenshot.jpg");
+    // delay opening the default browser to make sure the server is ready
+    sleep_ext(2, handler);
 
     int status;
     pid_t childPid;
