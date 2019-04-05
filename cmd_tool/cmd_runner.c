@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <errno.h>
 
@@ -31,6 +32,8 @@ static const char *remote = "/data/local/tmp/";
 // still possible to get an error about "could not find class 'com.rayworks.droidcast.Main'". so we
 // retrieve the apk source path via 'adb shell pm path your-pkg-name'.
 static const char *apk_src_path = NULL;
+
+static jmp_buf env_alarm;
 
 static void sig_pipe(int id)
 {
@@ -172,6 +175,8 @@ static void handler(int sig)
         signal(SIGALRM, SIG_DFL);
 
         system("open http://localhost:53516/screenshot.jpg");
+
+        longjmp(env_alarm, 1);
     }
 }
 
@@ -270,8 +275,10 @@ void sleep_ext(unsigned int seconds, void (*func)(int)) {
         exit(EXIT_FAILURE);
     }
 
-    alarm(seconds);
-    pause(); /* next caught signal will wake this up */
+    if(setjmp(env_alarm) == 0) {
+        alarm(seconds);
+        pause(); /* next caught signal will wake this up */
+    }
 }
 
 int main(int argc, char *argv[])
