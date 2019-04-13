@@ -27,7 +27,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     testImplementation 'junit:junit:4.12'
 
-    implementation 'com.koushikdutta.async:androidasync:2.1.9'
+    implementation 'com.koushikdutta.async:androidasync:2.2.1'
 }
 
 apply from: "../artifacts.gradle"
