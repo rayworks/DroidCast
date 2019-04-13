@@ -52,8 +52,10 @@ $ adb forward tcp:53516 tcp:53516
 ```
 
 * View the image via web browser
-http://localhost:53516/screenshot.jpg or with the specific dimension
-e.g. http://localhost:53516/screenshot.jpg?width=1080&height=1920
+http://localhost:53516/screenshot or with the specific dimension and image format,
+e.g. http://localhost:53516/screenshot?format=png&width=1080&height=1920
+
+ Currently `png`, `jpeg` and `webp`, these image types are supported. 
 
  ![](/screen-shot.png)
 
