@@ -53,7 +53,7 @@ http://localhost:53516/screenshot
 http://localhost:53516/screenshot?format=png&width=1080&height=1920
   目前支持的图片类型有`png`, `jpeg` 以及 `webp`。
 
- ![](/screen-shot.png)
+ ![](/screen_shot.png)
 
 
 ## 参考

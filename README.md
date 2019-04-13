@@ -57,7 +57,7 @@ e.g. http://localhost:53516/screenshot?format=png&width=1080&height=1920
 
  Currently `png`, `jpeg` and `webp`, these image types are supported. 
 
- ![](/screen-shot.png)
+ ![](/screen_shot.png)
 
 
 ## Reference <br>
