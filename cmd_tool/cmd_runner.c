@@ -174,7 +174,7 @@ static void handler(int sig)
     } else if (sig == SIGALRM) {
         signal(SIGALRM, SIG_DFL);
 
-        system("open http://localhost:53516/screenshot.jpg");
+        system("open http://localhost:53516/screenshot");
 
         longjmp(env_alarm, 1);
     }

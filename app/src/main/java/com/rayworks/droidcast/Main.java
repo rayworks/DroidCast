@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Looper;
 import android.os.Process;
+import android.support.annotation.Nullable;
+import android.support.v4.util.Pair;
 import android.text.TextUtils;
 
 import com.koushikdutta.async.AsyncServer;
@@ -18,9 +20,16 @@ import java.util.Locale;
 
 /** Created by seanzhou on 3/14/17. */
 public class Main {
-    static Looper looper;
-    static int width = 0;
-    static int height = 0;
+    private static final String IMAGE_JPEG = "image/jpeg";
+    private static final String IMAGE_WEBP = "image/webp";
+    private static final String IMAGE_PNG = "image/png";
+    private static final String WIDTH = "width";
+    private static final String HEIGHT = "height";
+    private static final String FORMAT = "format";
+
+    private static Looper looper;
+    private static int width = 0;
+    private static int height = 0;
 
     public static void main(String[] args) {
         AsyncHttpServer httpServer =
@@ -38,20 +47,75 @@ public class Main {
         System.out.println(">>> DroidCast main entry");
 
         AsyncServer server = new AsyncServer();
-        httpServer.get("/screenshot.jpg", new AnyRequestCallback());
+        httpServer.get("/screenshot", new AnyRequestCallback());
         httpServer.listen(server, 53516);
 
         Looper.loop();
     }
 
     static class AnyRequestCallback implements HttpServerRequestCallback {
+        private Pair<Bitmap.CompressFormat, String> mapRequestFormatInfo(ImageFormat imageFormat) {
+            Bitmap.CompressFormat compressFormat;
+            String contentType;
+
+            switch (imageFormat) {
+                case JPEG:
+                    compressFormat = Bitmap.CompressFormat.JPEG;
+                    contentType = IMAGE_JPEG;
+                    break;
+                case PNG:
+                    compressFormat = Bitmap.CompressFormat.PNG;
+                    contentType = IMAGE_PNG;
+                    break;
+                case WEBP:
+                    compressFormat = Bitmap.CompressFormat.WEBP;
+                    contentType = IMAGE_WEBP;
+                    break;
+
+                default:
+                    throw new UnsupportedOperationException("Unsupported image format detected");
+            }
+
+            return new Pair<>(compressFormat, contentType);
+        }
+
+        @Nullable
+        private Pair<Bitmap.CompressFormat, String> getImageFormatInfo(String reqFormat) {
+
+            ImageFormat format = ImageFormat.JPEG;
+
+            if (!TextUtils.isEmpty(reqFormat)) {
+                ImageFormat imageFormat = ImageFormat.resolveFormat(reqFormat);
+                if (ImageFormat.UNKNOWN.equals(imageFormat)) {
+                    return null;
+                } else {
+                    // default format
+                    format = imageFormat;
+                }
+            }
+
+            return mapRequestFormatInfo(format);
+        }
+
         @Override
         public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
             try {
                 Multimap pairs = request.getQuery();
 
-                String width = pairs.getString("width");
-                String height = pairs.getString("height");
+                String width = pairs.getString(WIDTH);
+                String height = pairs.getString(HEIGHT);
+                String reqFormat = pairs.getString(FORMAT);
+
+                Pair<Bitmap.CompressFormat, String> formatInfo = getImageFormatInfo(reqFormat);
+
+                if (formatInfo == null) {
+                    response.code(400);
+                    response.send(
+                            String.format(
+                                    Locale.ENGLISH, "Unsupported image format : %s", reqFormat));
+
+                    return;
+                }
 
                 if (!TextUtils.isEmpty(width) && !TextUtils.isEmpty(height)) {
                     if (TextUtils.isDigitsOnly(width) && TextUtils.isDigitsOnly(height)) {
@@ -98,9 +162,10 @@ public class Main {
                                 Process.myTid()));
 
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bout);
+                bitmap.compress(formatInfo.first, 100, bout);
                 bout.flush();
-                response.send("image/jpeg", bout.toByteArray());
+
+                response.send(formatInfo.second, bout.toByteArray());
 
                 // "Make sure to call Bitmap.recycle() as soon as possible, once its content is not
                 // needed anymore."
