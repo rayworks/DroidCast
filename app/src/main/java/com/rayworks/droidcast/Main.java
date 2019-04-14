@@ -31,6 +31,8 @@ public class Main {
     private static int width = 0;
     private static int height = 0;
 
+    private static DisplayUtil displayUtil;
+
     public static void main(String[] args) {
         AsyncHttpServer httpServer =
                 new AsyncHttpServer() {
@@ -45,6 +47,8 @@ public class Main {
 
         looper = Looper.myLooper();
         System.out.println(">>> DroidCast main entry");
+
+        displayUtil = new DisplayUtil();
 
         AsyncServer server = new AsyncServer();
         httpServer.get("/screenshot", new AnyRequestCallback());
@@ -126,7 +130,7 @@ public class Main {
 
                 if (Main.width == 0 || Main.height == 0) {
                     // dimension initialization
-                    Point point = DisplayUtil.getCurrentDisplaySize();
+                    Point point = displayUtil.getCurrentDisplaySize();
 
                     if (point != null && point.x > 0 && point.y > 0) {
                         Main.width = point.x;
@@ -160,6 +164,22 @@ public class Main {
                                 Main.height,
                                 Process.myPid(),
                                 Process.myTid()));
+
+                int screenRotation = displayUtil.getScreenRotation();
+
+                if (screenRotation != 0) {
+                    switch (screenRotation) {
+                        case 1: // 90 degree rotation (counter-clockwise)
+                            bitmap = displayUtil.rotateBitmap(bitmap, -90f);
+                            break;
+                        case 3: // 270 degree rotation
+                            bitmap = displayUtil.rotateBitmap(bitmap, 90f);
+                            break;
+                        case 2: // 180 degree rotation
+                            bitmap = displayUtil.rotateBitmap(bitmap, 180f);
+                            break;
+                    }
+                }
 
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 bitmap.compress(formatInfo.first, 100, bout);

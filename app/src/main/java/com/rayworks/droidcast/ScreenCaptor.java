@@ -16,8 +16,6 @@ public class ScreenCaptor {
         Bitmap bitmap = null;
 
         try {
-            System.out.println("started");
-
             String className;
             int sdkInt = Build.VERSION.SDK_INT;
             if (sdkInt > Build.VERSION_CODES.JELLY_BEAN_MR1) {
