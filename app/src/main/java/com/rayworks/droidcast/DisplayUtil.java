@@ -11,7 +11,9 @@ import android.view.IWindowManager;
 
 import java.lang.reflect.Method;
 
-/** Created by Sean on 5/27/17. */
+/**
+ * Created by Sean on 5/27/17.
+ */
 /* package */ final class DisplayUtil {
 
     private IWindowManager iWindowManager;
@@ -66,9 +68,15 @@ import java.lang.reflect.Method;
      */
     int getScreenRotation() {
         int rotation = 0;
+
         try {
-            rotation = iWindowManager.getDefaultDisplayRotation();
-        } catch (RemoteException e) {
+            Class<?> cls = iWindowManager.getClass();
+            try {
+                rotation = (Integer) iWindowManager.getClass().getMethod("getRotation").invoke(iWindowManager);
+            } catch (NoSuchMethodException e) {
+                rotation = (Integer) cls.getMethod("getDefaultDisplayRotation").invoke(iWindowManager);
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
         System.out.println(">>> Screen rotation: " + rotation);

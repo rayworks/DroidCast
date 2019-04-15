@@ -13,12 +13,4 @@ interface IWindowManager {
     void getBaseDisplaySize(int displayId, out Point size);
 
     void getRealDisplaySize(out Point paramPoint);
-
-    /**
-     * Retrieve the current orientation of the primary screen.
-     * @return Constant as per {@link android.view.Surface.Rotation}.
-     *
-     * @see android.view.Display#DEFAULT_DISPLAY
-     */
-    int getDefaultDisplayRotation();
 }
