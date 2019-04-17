@@ -6,14 +6,11 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.view.IWindowManager;
 
 import java.lang.reflect.Method;
 
-/**
- * Created by Sean on 5/27/17.
- */
+/** Created by Sean on 5/27/17. */
 /* package */ final class DisplayUtil {
 
     private IWindowManager iWindowManager;
@@ -49,6 +46,14 @@ import java.lang.reflect.Method;
             // Resolve the screen resolution for devices with OS version 4.3+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 iWindowManager.getInitialDisplaySize(0, localPoint);
+            } else {
+                // void getDisplaySize(out Point size)
+                Point out = new Point();
+
+                iWindowManager.getClass().getMethod("getDisplaySize").invoke(iWindowManager, out);
+                if (out.x > 0 && out.y > 0) {
+                    localPoint = out;
+                }
             }
 
             System.out.println(">>> Dimension: " + localPoint);
@@ -72,9 +77,15 @@ import java.lang.reflect.Method;
         try {
             Class<?> cls = iWindowManager.getClass();
             try {
-                rotation = (Integer) iWindowManager.getClass().getMethod("getRotation").invoke(iWindowManager);
+                rotation =
+                        (Integer)
+                                iWindowManager
+                                        .getClass()
+                                        .getMethod("getRotation")
+                                        .invoke(iWindowManager);
             } catch (NoSuchMethodException e) {
-                rotation = (Integer) cls.getMethod("getDefaultDisplayRotation").invoke(iWindowManager);
+                rotation =
+                        (Integer) cls.getMethod("getDefaultDisplayRotation").invoke(iWindowManager);
             }
         } catch (Exception e) {
             e.printStackTrace();
