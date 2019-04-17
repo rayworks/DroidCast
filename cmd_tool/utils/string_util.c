@@ -8,13 +8,16 @@ char* filter_apk_path(char* result) {
     // format like:
     // package:/data/app/com.rayworks.droidcast-Tb1-e8DHFvuQ1wI6_MlLww==/base.apk
 
+    // on OS 4.1
+    // package:/data/app/com.rayworks.droidcast-1.apk
+
     char* pstart = strchr(result, ':');
     if(!pstart)
         return NULL;
     
     pstart++;
 
-    const char* pBaseApk = "base.apk";
+    const char* pBaseApk = ".apk";
     char* pend = strstr(result, pBaseApk);
     pend += strlen(pBaseApk) - 1;
 

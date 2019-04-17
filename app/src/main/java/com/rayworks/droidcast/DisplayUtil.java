@@ -10,7 +10,9 @@ import android.view.IWindowManager;
 
 import java.lang.reflect.Method;
 
-/** Created by Sean on 5/27/17. */
+/**
+ * Created by Sean on 5/27/17.
+ */
 /* package */ final class DisplayUtil {
 
     private IWindowManager iWindowManager;
@@ -50,7 +52,7 @@ import java.lang.reflect.Method;
                 // void getDisplaySize(out Point size)
                 Point out = new Point();
 
-                iWindowManager.getClass().getMethod("getDisplaySize").invoke(iWindowManager, out);
+                iWindowManager.getClass().getMethod("getDisplaySize", Point.class).invoke(iWindowManager, out);
                 if (out.x > 0 && out.y > 0) {
                     localPoint = out;
                 }
