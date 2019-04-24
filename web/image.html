@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<header>
+    <title='screenshot'>
+        </title>
+        <style>
+            img {
+                image-orientation: from-image;
+            }
+        </style>
+</header>
+
+<body>
+
+    <h2>Image Size</h2>
+
+    <p>In this example, we specify the width and height of an image with the width and height attributes:</p>
+
+    <img id="image" alt="Droid screenshot">
+
+    <script type='text/javascript' src='./util.js'></script>
+
+    <script>
+        // var socket = new WebSocket('ws://localhost:53516/screenshot');
+        //myprotocol
+        var socket = new WebSocket('ws://localhost:53516/src');
+        socket.binaryType = 'arraybuffer';
+
+        try {
+            socket.onopen = function () {
+                console.log("on open");
+            }
+
+            socket.onmessage = function (msg) {
+                if(typeof msg.data === "string") {
+                    var dimension = JSON.parse(msg.data);
+                    console.log(dimension);
+
+                    var image = document.getElementById('image');
+                    image.width = dimension.width;
+                    image.height = dimension.height;
+                }
+
+                if (msg.data instanceof ArrayBuffer) 
+                {
+                    var arrayBuffer = msg.data;
+                    var bytes = new Uint8Array(arrayBuffer);
+
+                    var image = document.getElementById('image');
+                    image.src = 'data:image/png;base64,' + encode(bytes);
+                }
+            }
+
+            socket.onclose = function () {
+                console.log("on closed");
+            }
+
+            socket.onerror = function () {
+                console.log("socket error");
+            }
+        } catch (exception) {
+            alert('Error:' + exception);
+        }
+    </script>
+</body>
+
+</html>

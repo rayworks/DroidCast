@@ -6,13 +6,14 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.RemoteException;
+import android.view.Display;
+import android.view.IRotationWatcher;
 import android.view.IWindowManager;
 
 import java.lang.reflect.Method;
 
-/**
- * Created by Sean on 5/27/17.
- */
+/** Created by Sean on 5/27/17. */
 /* package */ final class DisplayUtil {
 
     private IWindowManager iWindowManager;
@@ -52,7 +53,10 @@ import java.lang.reflect.Method;
                 // void getDisplaySize(out Point size)
                 Point out = new Point();
 
-                iWindowManager.getClass().getMethod("getDisplaySize", Point.class).invoke(iWindowManager, out);
+                iWindowManager
+                        .getClass()
+                        .getMethod("getDisplaySize", Point.class)
+                        .invoke(iWindowManager, out);
                 if (out.x > 0 && out.y > 0) {
                     localPoint = out;
                 }
@@ -97,11 +101,32 @@ import java.lang.reflect.Method;
         return rotation;
     }
 
+    void setRotateListener(RotateListener listener) {
+        try {
+            iWindowManager.watchRotation(
+                    new IRotationWatcher.Stub() {
+                        @Override
+                        public void onRotationChanged(int rotation) throws RemoteException {
+                            if (listener != null) {
+                                listener.onRotate(rotation);
+                            }
+                        }
+                    },
+                    Display.DEFAULT_DISPLAY); // 26+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     Bitmap rotateBitmap(Bitmap bitmap, float degree) {
         Matrix matrix = new Matrix();
         matrix.postRotate(degree);
 
         return Bitmap.createBitmap(
                 bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+    interface RotateListener {
+        void onRotate(int rotate);
     }
 }
