@@ -16,9 +16,6 @@ import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
 import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
 import com.koushikdutta.async.http.server.HttpServerRequestCallback;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Locale;
@@ -88,11 +85,11 @@ public class Main {
                                         }
 
                                         System.out.println(">>> rotate to " + rotate);
-                                        sendScreenshotData(webSocket, width, height, rotate);
+                                        sendScreenshotData(webSocket, width, height);
                                     }
                                 });
 
-                        sendScreenshotData(webSocket, width, height, 0);
+                        sendScreenshotData(webSocket, width, height);
                     }
                 });
 
@@ -101,28 +98,10 @@ public class Main {
         Looper.loop();
     }
 
-    private static void sendScreenshotData(
-            WebSocket webSocket, int width, int height, int rotation) {
-
-        int w = width;
-        int h = height;
-        if (rotation % 2 != 0) {
-            w = height;
-            h = width;
-        }
-        try {
-            JSONObject object = new JSONObject();
-            object.put("width", w);
-            object.put("height", h);
-
-            webSocket.send(object.toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+    private static void sendScreenshotData(WebSocket webSocket, int width, int height) {
 
         try {
-            byte[] inBytes =
-                    getScreenImageInBytes(Bitmap.CompressFormat.JPEG, width, height, rotation);
+            byte[] inBytes = getScreenImageInBytes(Bitmap.CompressFormat.JPEG, width, height);
             webSocket.send(inBytes);
 
         } catch (IOException e) {
@@ -131,7 +110,7 @@ public class Main {
     }
 
     private static byte[] getScreenImageInBytes(
-            Bitmap.CompressFormat compressFormat, int destWidth, int destHeight, int screenRotation)
+            Bitmap.CompressFormat compressFormat, int destWidth, int destHeight)
             throws IOException {
         Bitmap bitmap = ScreenCaptor.screenshot(destWidth, destHeight);
 
@@ -158,6 +137,8 @@ public class Main {
                         Process.myPid(),
                         Process.myTid()));
 
+        int screenRotation = displayUtil.getScreenRotation();
+
         if (screenRotation != 0) {
             switch (screenRotation) {
                 case 1: // 90 degree rotation (counter-clockwise)
@@ -171,6 +152,9 @@ public class Main {
                     break;
             }
         }
+
+        System.out.println(
+                "Bitmap final dimens : " + bitmap.getWidth() + "|" + bitmap.getHeight());
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         bitmap.compress(compressFormat, 100, bout);
@@ -269,11 +253,8 @@ public class Main {
 
                 int destWidth = Main.width;
                 int destHeight = Main.height;
-                int screenRotation = displayUtil.getScreenRotation();
 
-                byte[] bytes =
-                        getScreenImageInBytes(
-                                formatInfo.first, destWidth, destHeight, screenRotation);
+                byte[] bytes = getScreenImageInBytes(formatInfo.first, destWidth, destHeight);
 
                 response.send(formatInfo.second, bytes);
 
