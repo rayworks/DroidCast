@@ -3,26 +3,41 @@
 
 <header>
     <title>Screenshot</title>
-    <style>
-        img {
-                image-orientation: from-image;
-            }
-    </style>
+    <meta name="viewport" content="width=device-width, minimum-scale=0.1">
 </header>
 
-<body>
+<body style="background: #0e0e0e;">
 
-    <h2>Image Size</h2>
+    <h2 style="color: #ffffff;">Image Size</h2>
 
-    <p>In this example, we specify the width and height of an image with the width and height attributes:</p>
+    <p style="color: #ffffff;">In this example, we specify the width and height of an image with the width and height
+        attributes:</p>
 
-    <img id="image" alt="Droid screenshot">
+    <div class="container">
+        <img  onclick="resize()" id="image" alt="Droid screenshot">
+    </div>
+
+    <script>
+        var zoomedIn = 1;
+        function resize() {
+            var img = document.getElementById("image")
+            if (zoomedIn == 0) {
+                image.style = "-webkit-user-select: none;cursor: zoom-in;"
+                zoomedIn = 1;
+                img.width = img.width / 2;
+                img.height = img.height / 2;
+            } else {
+                image.style = "-webkit-user-select: none;cursor: zoom-out;"
+                zoomedIn = 0;
+                img.width = img.width * 2;
+                img.height = img.height * 2;
+            }
+        }
+    </script>
 
     <script type='text/javascript' src='./util.js'></script>
 
     <script>
-        // var socket = new WebSocket('ws://localhost:53516/screenshot');
-        //myprotocol
         var socket = new WebSocket('ws://localhost:53516/src');
         socket.binaryType = 'arraybuffer';
 
@@ -32,17 +47,18 @@
             }
 
             socket.onmessage = function (msg) {
-                if(typeof msg.data === "string") {
+                if (typeof msg.data === "string") {
                     var dimension = JSON.parse(msg.data);
                     console.log(dimension);
 
                     var image = document.getElementById('image');
-                    image.width = dimension.width;
-                    image.height = dimension.height;
+                    image.width = dimension.width / 2;
+                    image.height = dimension.height / 2;
+
+                    image.style = "-webkit-user-select: none;cursor: zoom-in;"
                 }
 
-                if (msg.data instanceof ArrayBuffer) 
-                {
+                if (msg.data instanceof ArrayBuffer) {
                     var arrayBuffer = msg.data;
                     var bytes = new Uint8Array(arrayBuffer);
 

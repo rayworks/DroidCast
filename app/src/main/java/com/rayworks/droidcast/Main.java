@@ -16,11 +16,16 @@ import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
 import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
 import com.koushikdutta.async.http.server.HttpServerRequestCallback;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Locale;
 
-/** Created by seanzhou on 3/14/17. */
+/**
+ * Created by seanzhou on 3/14/17.
+ */
 public class Main {
     private static final String IMAGE_JPEG = "image/jpeg";
     private static final String IMAGE_WEBP = "image/webp";
@@ -34,6 +39,10 @@ public class Main {
     private static int height = 0;
 
     private static DisplayUtil displayUtil;
+
+    interface ImageDimensionResolver {
+        void onResolveDimension(int width, int height, int rotation);
+    }
 
     public static void main(String[] args) {
         AsyncHttpServer httpServer =
@@ -101,7 +110,21 @@ public class Main {
     private static void sendScreenshotData(WebSocket webSocket, int width, int height) {
 
         try {
-            byte[] inBytes = getScreenImageInBytes(Bitmap.CompressFormat.JPEG, width, height);
+            byte[] inBytes = getScreenImageInBytes(Bitmap.CompressFormat.JPEG, width, height, new ImageDimensionResolver() {
+                @Override
+                public void onResolveDimension(int width, int height, int rotation) {
+                    JSONObject obj = new JSONObject();
+                    try {
+                        obj.put("width", width);
+                        obj.put("height", height);
+                        obj.put("rotation", rotation);
+
+                        webSocket.send(obj.toString());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
             webSocket.send(inBytes);
 
         } catch (IOException e) {
@@ -110,7 +133,8 @@ public class Main {
     }
 
     private static byte[] getScreenImageInBytes(
-            Bitmap.CompressFormat compressFormat, int destWidth, int destHeight)
+            Bitmap.CompressFormat compressFormat, int destWidth, int destHeight,
+            @Nullable ImageDimensionResolver resolver)
             throws IOException {
         Bitmap bitmap = ScreenCaptor.screenshot(destWidth, destHeight);
 
@@ -153,8 +177,12 @@ public class Main {
             }
         }
 
-        System.out.println(
-                "Bitmap final dimens : " + bitmap.getWidth() + "|" + bitmap.getHeight());
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        System.out.println("Bitmap final dimens : " + width + "|" + height);
+        if (resolver != null) {
+            resolver.onResolveDimension(width, height, screenRotation);
+        }
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         bitmap.compress(compressFormat, 100, bout);
@@ -254,7 +282,7 @@ public class Main {
                 int destWidth = Main.width;
                 int destHeight = Main.height;
 
-                byte[] bytes = getScreenImageInBytes(formatInfo.first, destWidth, destHeight);
+                byte[] bytes = getScreenImageInBytes(formatInfo.first, destWidth, destHeight, null);
 
                 response.send(formatInfo.second, bytes);
 
