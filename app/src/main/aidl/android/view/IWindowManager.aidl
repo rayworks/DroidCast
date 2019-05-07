@@ -16,12 +16,6 @@ interface IWindowManager {
     void getRealDisplaySize(out Point paramPoint);
 
     /**
-     * Watch the rotation of the specified screen.  Returns the current rotation,
-     * calls back when it changes.
-     */
-    int watchRotation(IRotationWatcher watcher, int displayId);
-
-    /**
      * Remove a rotation watcher set using watchRotation.
      * @hide
      */

@@ -83,12 +83,7 @@ import java.lang.reflect.Method;
         try {
             Class<?> cls = iWindowManager.getClass();
             try {
-                rotation =
-                        (Integer)
-                                iWindowManager
-                                        .getClass()
-                                        .getMethod("getRotation")
-                                        .invoke(iWindowManager);
+                rotation = (Integer) cls.getMethod("getRotation").invoke(iWindowManager);
             } catch (NoSuchMethodException e) {
                 rotation =
                         (Integer) cls.getMethod("getDefaultDisplayRotation").invoke(iWindowManager);
@@ -103,7 +98,9 @@ import java.lang.reflect.Method;
 
     void setRotateListener(RotateListener listener) {
         try {
-            iWindowManager.watchRotation(
+            Class<?> clazz = iWindowManager.getClass();
+
+            IRotationWatcher watcher =
                     new IRotationWatcher.Stub() {
                         @Override
                         public void onRotationChanged(int rotation) throws RemoteException {
@@ -111,8 +108,17 @@ import java.lang.reflect.Method;
                                 listener.onRotate(rotation);
                             }
                         }
-                    },
-                    Display.DEFAULT_DISPLAY); // 26+
+                    };
+
+            try {
+                clazz.getMethod("watchRotation", IRotationWatcher.class, int.class)
+                        .invoke(iWindowManager, watcher, Display.DEFAULT_DISPLAY); // 26+
+
+            } catch (NoSuchMethodException ex) {
+                clazz.getMethod("watchRotation", IRotationWatcher.class)
+                        .invoke(iWindowManager, watcher);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
