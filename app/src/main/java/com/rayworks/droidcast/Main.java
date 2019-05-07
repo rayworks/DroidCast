@@ -2,8 +2,10 @@ package com.rayworks.droidcast;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
@@ -23,9 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Locale;
 
-/**
- * Created by seanzhou on 3/14/17.
- */
+/** Created by seanzhou on 3/14/17. */
 public class Main {
     private static final String IMAGE_JPEG = "image/jpeg";
     private static final String IMAGE_WEBP = "image/webp";
@@ -33,16 +33,14 @@ public class Main {
     private static final String WIDTH = "width";
     private static final String HEIGHT = "height";
     private static final String FORMAT = "format";
+    private static final int SCREENSHOT_DELAY_MILLIS = 1500;
 
     private static Looper looper;
     private static int width = 0;
     private static int height = 0;
 
     private static DisplayUtil displayUtil;
-
-    interface ImageDimensionResolver {
-        void onResolveDimension(int width, int height, int rotation);
-    }
+    private static Handler handler;
 
     public static void main(String[] args) {
         AsyncHttpServer httpServer =
@@ -59,6 +57,8 @@ public class Main {
         looper = Looper.myLooper();
         System.out.println(">>> DroidCast main entry");
 
+        handler = new Handler(looper);
+
         displayUtil = new DisplayUtil();
 
         AsyncServer server = new AsyncServer();
@@ -70,35 +70,33 @@ public class Main {
                     @Override
                     public void onConnected(WebSocket webSocket, AsyncHttpServerRequest request) {
 
-                        Point displaySize = displayUtil.getCurrentDisplaySize();
-
-                        int width = 1080;
-                        int height = 1920;
-                        if (displaySize != null) {
-                            width = displaySize.x;
-                            height = displaySize.y;
-                        }
+                        Pair<Integer, Integer> pair = getDimension();
 
                         displayUtil.setRotateListener(
                                 new DisplayUtil.RotateListener() {
                                     @Override
                                     public void onRotate(int rotate) {
-                                        Point displaySize = displayUtil.getCurrentDisplaySize();
-
-                                        int width = 1080;
-                                        int height = 1920;
-
-                                        if (displaySize != null) {
-                                            width = displaySize.x;
-                                            height = displaySize.y;
-                                        }
-
                                         System.out.println(">>> rotate to " + rotate);
-                                        sendScreenshotData(webSocket, width, height);
+
+                                        // delay for the new rotated screen
+                                        handler.postDelayed(
+                                                new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        Pair<Integer, Integer> dimen =
+                                                                getDimension();
+
+                                                        sendScreenshotData(
+                                                                webSocket,
+                                                                dimen.first,
+                                                                dimen.second);
+                                                    }
+                                                },
+                                                SCREENSHOT_DELAY_MILLIS);
                                     }
                                 });
 
-                        sendScreenshotData(webSocket, width, height);
+                        sendScreenshotData(webSocket, pair.first, pair.second);
                     }
                 });
 
@@ -107,24 +105,43 @@ public class Main {
         Looper.loop();
     }
 
+    @NonNull
+    private static Pair<Integer, Integer> getDimension() {
+        Point displaySize = displayUtil.getCurrentDisplaySize();
+
+        int width = 1080;
+        int height = 1920;
+        if (displaySize != null) {
+            width = displaySize.x;
+            height = displaySize.y;
+        }
+        return new Pair<>(width, height);
+    }
+
     private static void sendScreenshotData(WebSocket webSocket, int width, int height) {
 
         try {
-            byte[] inBytes = getScreenImageInBytes(Bitmap.CompressFormat.JPEG, width, height, new ImageDimensionResolver() {
-                @Override
-                public void onResolveDimension(int width, int height, int rotation) {
-                    JSONObject obj = new JSONObject();
-                    try {
-                        obj.put("width", width);
-                        obj.put("height", height);
-                        obj.put("rotation", rotation);
+            byte[] inBytes =
+                    getScreenImageInBytes(
+                            Bitmap.CompressFormat.JPEG,
+                            width,
+                            height,
+                            new ImageDimensionListener() {
+                                @Override
+                                public void onResolveDimension(
+                                        int width, int height, int rotation) {
+                                    JSONObject obj = new JSONObject();
+                                    try {
+                                        obj.put("width", width);
+                                        obj.put("height", height);
+                                        obj.put("rotation", rotation);
 
-                        webSocket.send(obj.toString());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+                                        webSocket.send(obj.toString());
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
             webSocket.send(inBytes);
 
         } catch (IOException e) {
@@ -133,8 +150,10 @@ public class Main {
     }
 
     private static byte[] getScreenImageInBytes(
-            Bitmap.CompressFormat compressFormat, int destWidth, int destHeight,
-            @Nullable ImageDimensionResolver resolver)
+            Bitmap.CompressFormat compressFormat,
+            int destWidth,
+            int destHeight,
+            @Nullable ImageDimensionListener resolver)
             throws IOException {
         Bitmap bitmap = ScreenCaptor.screenshot(destWidth, destHeight);
 
@@ -193,6 +212,10 @@ public class Main {
         bitmap.recycle();
 
         return bout.toByteArray();
+    }
+
+    interface ImageDimensionListener {
+        void onResolveDimension(int width, int height, int rotation);
     }
 
     static class AnyRequestCallback implements HttpServerRequestCallback {
@@ -285,13 +308,6 @@ public class Main {
                 byte[] bytes = getScreenImageInBytes(formatInfo.first, destWidth, destHeight, null);
 
                 response.send(formatInfo.second, bytes);
-
-                //                String encode = Base64.encodeToString(bytes, Base64.DEFAULT);
-                //                System.out.println("================== encoded started
-                // ==================");
-                //                System.out.println(encode);
-                //                System.out.println("================== encoded end
-                // ==================");
 
             } catch (Exception e) {
                 response.code(500);
