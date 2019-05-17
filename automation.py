@@ -6,6 +6,7 @@
 
 import os
 import subprocess
+import webbrowser
 
 from threading import Timer
 
@@ -41,7 +42,8 @@ def locateApkPath():
 
 
 def openBrowser():
-    os.system('open http://localhost:53516/screenshot')
+    url = 'http://localhost:53516/screenshot'
+    webbrowser.open_new(url)
 
 
 def automate():
