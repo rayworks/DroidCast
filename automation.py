@@ -7,15 +7,24 @@
 import os
 import subprocess
 import webbrowser
+import argparse
 
 from threading import Timer
 
 adb = ['adb']
 
+parser = argparse.ArgumentParser(description='Automation script to activate capturing screenshot of Android device')
+parser.add_argument('-s', '--serial', dest='device_serial', help='Device serial number (adb -s option)')
+args_in = parser.parse_args()
 
 def run_adb(args, pipeOutput=True):
-    args = adb + args
+    if(args_in.device_serial):
+        args = adb + ['-s', args_in.device_serial] + args
+    else:
+        args = adb + args
 
+    # print('exec cmd : %s' % args)
+        
     out = None
     if (pipeOutput):
         out = subprocess.PIPE
@@ -45,9 +54,27 @@ def openBrowser():
     url = 'http://localhost:53516/screenshot'
     webbrowser.open_new(url)
 
+def identifyDevice():
+
+    (rc, out, _) = run_adb(["devices"])
+    if(rc):
+        raise RuntimeError("Fail to find devices")
+    else:
+        # Output as following:
+        # List of devices attached
+        # 6466eb0c	device
+        print out
+        device_serial_no = args_in.device_serial
+        
+        devicesInfo = str(out)
+        deviceCnt = devicesInfo.count('device') - 1
+        if(deviceCnt > 1 and (not device_serial_no)):
+            raise RuntimeError("Please specify the serial number of target device you want to use ('-s serial_number').")
 
 def automate():
     try:
+        identifyDevice()
+
         class_path = locateApkPath()
 
         (code, out, err) = run_adb(["forward", "tcp:53516", "tcp:53516"])
@@ -58,7 +85,6 @@ def automate():
                 "app_process",
                 "/",  # unused
                 "com.rayworks.droidcast.Main"]
-        print(args)
 
         # delay opening the web page
         t = Timer(2, openBrowser)
