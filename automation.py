@@ -12,7 +12,6 @@ import argparse
 from threading import Timer
 
 adb = ['adb']
-device_serial_no = ''
 
 parser = argparse.ArgumentParser(description='Automation script to activate capturing screenshot of Android device')
 parser.add_argument('-s', '--serial', dest='device_serial', help='Device serial number (adb -s option)')
@@ -61,18 +60,15 @@ def identifyDevice():
     if(rc):
         raise RuntimeError("Fail to find devices")
     else:
-        print out
-
-        device_serial_no = ''
-        if(args_in.device_serial):
-            device_serial_no = args_in.device_serial
-        
         # Output as following:
         # List of devices attached
         # 6466eb0c	device
+        print out
+        device_serial_no = args_in.device_serial
+        
         devicesInfo = str(out)
         deviceCnt = devicesInfo.count('device') - 1
-        if(deviceCnt > 1 and device_serial_no == ''):
+        if(deviceCnt > 1 and (not device_serial_no)):
             raise RuntimeError("Please specify the serial number of target device you want to use ('-s serial_number').")
 
 def automate():
