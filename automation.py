@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(
     description='Automation script to activate capturing screenshot of Android device')
 parser.add_argument('-s', '--serial', dest='device_serial',
                     help='Device serial number (adb -s option)')
-parser.add_argument('-p', '--port', dest='port', nargs='?', const=1, type=int, default=53516,
+parser.add_argument('-p', '--port', dest='port', nargs='?', const=53516, type=int, default=53516,
                     help='Port number to be connected, by default it\'s 53516')
 args_in = parser.parse_args()
 
