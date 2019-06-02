@@ -13,9 +13,14 @@ from threading import Timer
 
 adb = ['adb']
 
-parser = argparse.ArgumentParser(description='Automation script to activate capturing screenshot of Android device')
-parser.add_argument('-s', '--serial', dest='device_serial', help='Device serial number (adb -s option)')
+parser = argparse.ArgumentParser(
+    description='Automation script to activate capturing screenshot of Android device')
+parser.add_argument('-s', '--serial', dest='device_serial',
+                    help='Device serial number (adb -s option)')
+parser.add_argument('-p', '--port', dest='port', nargs='?', const=1, type=int, default=53516,
+                    help='Port number to be connected, by default it\'s 53516')
 args_in = parser.parse_args()
+
 
 def run_adb(args, pipeOutput=True):
     if(args_in.device_serial):
@@ -24,7 +29,6 @@ def run_adb(args, pipeOutput=True):
         args = adb + args
 
     # print('exec cmd : %s' % args)
-        
     out = None
     if (pipeOutput):
         out = subprocess.PIPE
@@ -51,8 +55,9 @@ def locateApkPath():
 
 
 def openBrowser():
-    url = 'http://localhost:53516/screenshot'
+    url = 'http://localhost:%d/screenshot' % args_in.port
     webbrowser.open_new(url)
+
 
 def identifyDevice():
 
@@ -65,11 +70,13 @@ def identifyDevice():
         # 6466eb0c	device
         print out
         device_serial_no = args_in.device_serial
-        
+
         devicesInfo = str(out)
         deviceCnt = devicesInfo.count('device') - 1
         if(deviceCnt > 1 and (not device_serial_no)):
-            raise RuntimeError("Please specify the serial number of target device you want to use ('-s serial_number').")
+            raise RuntimeError(
+                "Please specify the serial number of target device you want to use ('-s serial_number').")
+
 
 def automate():
     try:
@@ -77,14 +84,16 @@ def automate():
 
         class_path = locateApkPath()
 
-        (code, out, err) = run_adb(["forward", "tcp:53516", "tcp:53516"])
-        print(">>> adb forward tcp:53516 ", code)
+        (code, out, err) = run_adb(
+            ["forward", "tcp:%d" % args_in.port, "tcp:%d" % args_in.port])
+        print(">>> adb forward tcp:%d " % args_in.port, code)
 
         args = ["shell",
                 class_path,
                 "app_process",
                 "/",  # unused
-                "com.rayworks.droidcast.Main"]
+                "com.rayworks.droidcast.Main",
+                "--port=%d" % args_in.port]
 
         # delay opening the web page
         t = Timer(2, openBrowser)
@@ -93,8 +102,9 @@ def automate():
         # event loop starts
         run_adb(args, pipeOutput=False)
 
-        (code, out, err) = run_adb(["forward", "--remove", "tcp:53516"])
-        print(">>> adb unforward tcp:53516 ", code)
+        (code, out, err) = run_adb(
+            ["forward", "--remove", "tcp:%d" % args_in.port])
+        print(">>> adb unforward tcp:%d " % args_in.port, code)
 
     except (Exception), e:
         print e

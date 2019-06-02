@@ -27,6 +27,8 @@ import java.util.Locale;
 
 /** Created by seanzhou on 3/14/17. */
 public class Main {
+    private static final String sTAG = Main.class.getName();
+
     private static final String IMAGE_JPEG = "image/jpeg";
     private static final String IMAGE_WEBP = "image/webp";
     private static final String IMAGE_PNG = "image/png";
@@ -39,10 +41,14 @@ public class Main {
     private static int width = 0;
     private static int height = 0;
 
+    private static int port = 53516;
+
     private static DisplayUtil displayUtil;
     private static Handler handler;
 
     public static void main(String[] args) {
+        resolveArgs(args);
+
         AsyncHttpServer httpServer =
                 new AsyncHttpServer() {
                     @Override
@@ -100,9 +106,26 @@ public class Main {
                     }
                 });
 
-        httpServer.listen(server, 53516);
+        httpServer.listen(server, port);
 
         Looper.loop();
+    }
+
+    private static void resolveArgs(String[] args) {
+        // System.out.println(Arrays.toString(args));
+
+        if (args.length > 0) {
+            String[] params = args[0].split("=");
+
+            if ("--port".equals(params[0])) {
+                try {
+                    port = Integer.parseInt(params[1]);
+                    System.out.println(sTAG + " | Port set to " + port);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     @NonNull
