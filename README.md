@@ -2,9 +2,29 @@
 
 [中文文档](/README_CN.md)
 
-An experimental demo for capturing and displaying screenshot of Android devices.
+An experimental demo for capturing and displaying screenshot of Android devices in the WebBrowser.
 
-## Required configuration to run it wirelessly :
+## Dependencies
+* [Python 2.x](https://www.python.org/downloads/)
+* [ADB tool](https://developer.android.com/studio/releases/platform-tools)
+
+## Quick start
+* Connect your device/emulator
+
+* Install the apk
+ 
+ Download and install the prebuilt apk from [here](/apk/DroidCast-debug-1.0.apk) or install it directly:
+```
+./gradlew clean installDebug
+```
+* Run the script
+```
+python automation.py
+```
+
+After that, the default web browser will be opened. You should see the screenshot now. 
+
+## Use it wirelessly :
 
 * Get your device IP address (in Settings - System - About phone - Status) e.g : `192.168.x.x`
 * Enable adb over TCP/IP on your device: `adb tcpip 5555`

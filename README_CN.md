@@ -1,5 +1,26 @@
 # DroidCast
-在 Android 设备上截屏并在PC上显示屏幕图像的一个实验性项目。
+
+在 Android 设备上截屏并在浏览器上显示屏幕图像的一个实验性项目。
+
+## 依赖
+* [Python 2.x](https://www.python.org/downloads/)
+* [ADB tool](https://developer.android.google.cn/studio/releases/platform-tools)
+
+## 快速上手
+* 连接你的设Android 设备或是模拟器
+
+* 安装 Apk
+ 
+ 从 [这里](/apk/DroidCast-debug-1.0.apk) 下载并安装应用，或是直接通过命令行安装:
+```
+./gradlew clean installDebug
+```
+* 运行脚本
+```
+python automation.py
+```
+
+然后，默认浏览器将会打开，你就能看到截屏了。
 
 ## 同网段 WIFI 环境下无线配置使用：
 * 获取设备IP地址 (设置-系统-关于手机-状态) e.g : `192.168.x.x`
