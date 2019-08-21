@@ -4,7 +4,7 @@
 
 在 Android 设备上截屏并在浏览器上显示屏幕图像的一个实验性项目。
 
- ![](/screen_shot.png)
+ ![](/screen_shot_dock.png)
 
 ## 依赖
 * [Python 2.x](https://www.python.org/downloads/)

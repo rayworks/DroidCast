@@ -6,7 +6,7 @@
 
 An experimental demo for capturing and displaying screenshot of Android devices in the WebBrowser.
 
- ![](/screen_shot.png)
+ ![](/screen_shot_dock.png)
  
 ## Dependencies
 * [Python 2.x](https://www.python.org/downloads/)
