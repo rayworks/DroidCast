@@ -4,6 +4,8 @@
 
 在 Android 设备上截屏并在浏览器上显示屏幕图像的一个实验性项目。
 
+ ![](/screen_shot.png)
+
 ## 依赖
 * [Python 2.x](https://www.python.org/downloads/)
 * [ADB tool](https://developer.android.google.cn/studio/releases/platform-tools)
@@ -76,12 +78,10 @@ http://localhost:53516/screenshot
 http://localhost:53516/screenshot?format=png&width=1080&height=1920
   目前支持的图片类型有`png`, `jpeg` 以及 `webp`。
 
- ![](/screen_shot.png)
-
 
 ## 参考
 
-[vysor原理以及Android同屏方案](http://zke1ev3n.me/2016/07/02/vysor%E5%8E%9F%E7%90%86%E4%BB%A5%E5%8F%8AAndroid%E5%90%8C%E5%B1%8F%E6%96%B9%E6%A1%88/)
+[vysor原理以及Android同屏方案](https://juejin.im/entry/57fe39400bd1d00058dd4652)
 
 [scrcpy : Display and control your Android device](https://github.com/Genymobile/scrcpy)
 
