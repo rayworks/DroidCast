@@ -21,7 +21,7 @@
 ```
 * 运行脚本
 ```
-python automation.py
+python scripts/automation.py
 ```
 
 然后，默认浏览器将会打开，你就能看到截屏了。
@@ -38,7 +38,7 @@ python automation.py
 <h2 id="usage">一般（USB 连线）使用说明:</h2>
 
 ### 备注:
-一旦APK安装完成，你可以使用 [命令行工具](/automation.py) 来自动化完成以下 `adb` 命令相关的操作.
+一旦APK安装完成，你可以使用 [python 脚本](/scripts/automation.py) 来自动化完成以下 `adb` 命令相关的操作.
 
 
 * 执行以下命令在手机上安装 apk （不要通过 Android Studio  `Run 'app'` 来安装）
