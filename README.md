@@ -9,7 +9,7 @@ An experimental demo for capturing and displaying screenshot of Android devices 
  ![](/screen_shot_dock.png)
  
 ## Dependencies
-* [Python 2.x](https://www.python.org/downloads/)
+* [Python](https://www.python.org/downloads/)
 * [ADB tool](https://developer.android.com/studio/releases/platform-tools)
 
 ## Quick start
@@ -23,7 +23,7 @@ An experimental demo for capturing and displaying screenshot of Android devices 
 ```
 * Run the script
 ```
-python automation.py
+python scripts/automation.py
 ```
 
 After that, the default web browser will be opened. You should see the screenshot now. 
@@ -41,7 +41,7 @@ To switch back to USB mode: `adb usb`.
 <h2 id="usage">Common usage:</h2>
 
 ### Note:
-Once apk file installed, you can use the [cmd_tool](/automation.py) to automate the following `adb` related operations.
+Once apk file installed, you can use the [python scripts](/scripts/automation.py) to automate the following `adb` related operations.
 
 * Install the apk properly on the phone (Don't install it via `Run 'app'` from Android Studio).
 
