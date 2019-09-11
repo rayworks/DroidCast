@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /** Created by seanzhou on 3/14/17. */
-public class ScreenCaptor {
+public class ScreenCaptorUtils {
 
     private static final String METHOD_SCREENSHOT = "screenshot";
 
@@ -23,8 +23,6 @@ public class ScreenCaptor {
             } else {
                 className = "android.view.Surface";
             }
-
-            Rect rect = new Rect();
 
             Method declaredMethod;
             Class<?> clazz = Class.forName(className);

@@ -174,11 +174,14 @@ public class Main {
 
     private static byte[] getScreenImageInBytes(
             Bitmap.CompressFormat compressFormat,
-            int destWidth,
-            int destHeight,
+            int w,
+            int h,
             @Nullable ImageDimensionListener resolver)
             throws IOException {
-        Bitmap bitmap = ScreenCaptor.screenshot(destWidth, destHeight);
+
+        int destWidth = w;
+        int destHeight = h;
+        Bitmap bitmap = ScreenCaptorUtils.screenshot(destWidth, destHeight);
 
         if (bitmap == null) {
             System.out.println(
@@ -191,7 +194,7 @@ public class Main {
             destWidth /= 2;
             destHeight /= 2;
 
-            bitmap = ScreenCaptor.screenshot(destWidth, destHeight);
+            bitmap = ScreenCaptorUtils.screenshot(destWidth, destHeight);
         }
 
         System.out.println(
@@ -215,6 +218,8 @@ public class Main {
                     break;
                 case 2: // 180 degree rotation
                     bitmap = displayUtil.rotateBitmap(bitmap, 180f);
+                    break;
+                default:
                     break;
             }
         }
@@ -305,11 +310,10 @@ public class Main {
                     return;
                 }
 
-                if (!TextUtils.isEmpty(width) && !TextUtils.isEmpty(height)) {
-                    if (TextUtils.isDigitsOnly(width) && TextUtils.isDigitsOnly(height)) {
-                        Main.width = Integer.parseInt(width);
-                        Main.height = Integer.parseInt(height);
-                    }
+                if (!TextUtils.isEmpty(width) && !TextUtils.isEmpty(height) &&
+                        TextUtils.isDigitsOnly(width) && TextUtils.isDigitsOnly(height)) {
+                    Main.width = Integer.parseInt(width);
+                    Main.height = Integer.parseInt(height);
                 }
 
                 if (Main.width == 0 || Main.height == 0) {

@@ -11,7 +11,7 @@ are a few steps to do code translation :
     2to3 -w automation.py
     ```
 
-* update the code at L36-L37 to :
+* update the code at L35-L36 to :
     ```
         p = subprocess.Popen([str(arg)
                               for arg in args], stdout=out, encoding='utf-8')

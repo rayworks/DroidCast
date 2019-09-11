@@ -135,7 +135,7 @@ void wait_for_child_process(pid_t proc, char *p_cmd)
 
 static void handler(int sig)
 {
-    static int count = 0;
+    int count = 0;
 
     /*
         UNSAFE: Non-async-signal-safe functions used.
@@ -260,7 +260,7 @@ void retrieve_src_apk_path()
                     "path",
                     "com.rayworks.droidcast"
                 };
-         pid_t proc = adb_execute(NULL, cmd, ARRAY_LEN(cmd));
+         adb_execute(NULL, cmd, ARRAY_LEN(cmd));
          wait(NULL);
 
          printf("child proc existing\n");
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
         "/", // unused
         "com.rayworks.droidcast.Main"};
 
-    proc = adb_execute(NULL, cmd, ARRAY_LEN(cmd));
+    adb_execute(NULL, cmd, ARRAY_LEN(cmd));
 
     // delay opening the default browser to make sure the server is ready
     sleep_ext(2, handler);

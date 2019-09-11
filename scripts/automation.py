@@ -4,7 +4,6 @@
 # default web browser.
 # To get started, simply run : 'python ./automation.py'
 
-import os
 import subprocess
 import webbrowser
 import argparse
@@ -84,7 +83,7 @@ def automate():
 
         class_path = locateApkPath()
 
-        (code, out, err) = run_adb(
+        (code, _, err) = run_adb(
             ["forward", "tcp:%d" % args_in.port, "tcp:%d" % args_in.port])
         print(">>> adb forward tcp:%d " % args_in.port, code)
 
