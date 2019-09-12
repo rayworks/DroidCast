@@ -2,7 +2,7 @@ package com.rayworks.droidcast;
 
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.widget.TextView;
 
 import java.util.Locale;
