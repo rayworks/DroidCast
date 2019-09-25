@@ -2,7 +2,8 @@
 
 # DroidCast
 
-在 Android 设备上截屏并在浏览器上显示屏幕图像的一个实验性项目。
+在 Android 设备上截屏并在浏览器上显示屏幕图像的一个实验性项目。该工具能兼容 Android 
+4.0 及以上系统版本。
 
 ![](/screen_shot_dock.png)
 

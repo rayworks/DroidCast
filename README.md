@@ -4,7 +4,8 @@
 
 [中文文档](/README_CN.md)
 
-An experimental demo for capturing and displaying screenshot of Android devices in the WebBrowser.
+An experimental demo for capturing and displaying screenshot of Android devices in the WebBrowser. 
+It's compatible with Android OS 4.0+ . 
 
 ![](/screen_shot_dock.png)
 
