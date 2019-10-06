@@ -2,10 +2,9 @@ package com.rayworks.droidcast;
 
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 import android.widget.TextView;
 
-import java.util.Locale;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -22,7 +21,6 @@ public class MainActivity extends AppCompatActivity {
         String srcLocation = info.sourceDir;
 
         TextView textView = findViewById(R.id.text);
-        textView.setText(String.format(Locale.ENGLISH, "Source apk Dir: %s", srcLocation));
-
+        textView.setText(TextUtils.Companion.format("Source apk Dir:", srcLocation));
     }
 }
