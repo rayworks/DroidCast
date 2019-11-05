@@ -24,7 +24,7 @@
 ./gradlew clean installDebug
 ```
 
-- 运行脚本
+- 运行脚本 (Python3.6 及以上环境请使用 `automation3.py`)
 
 ```
 python scripts/automation.py

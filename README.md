@@ -26,7 +26,7 @@ Download and install the prebuilt apk from [here](/apk/DroidCast-debug-1.0.apk) 
 ./gradlew clean installDebug
 ```
 
-- Run the script
+- Run the script (using `automation3.py` for Python 3.6+)
 
 ```
 python scripts/automation.py
