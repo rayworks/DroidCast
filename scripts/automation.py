@@ -76,6 +76,9 @@ def identifyDevice():
             raise RuntimeError(
                 "Please specify the serial number of target device you want to use ('-s serial_number').")
 
+def print_url():
+    (rc, out, _) = run_adb(["shell", "ifconfig | grep -o 'inet addr:[0-9|.]*' | cut -d':' -f2 | tail -1 | tr -d '\n'"])
+    print "\n>>> Share the url 'http://{0}:{1}/screenshot' to see the live screen! <<<\n".format(str(out), args_in.port)
 
 def automate():
     try:
@@ -86,6 +89,8 @@ def automate():
         (code, _, err) = run_adb(
             ["forward", "tcp:%d" % args_in.port, "tcp:%d" % args_in.port])
         print(">>> adb forward tcp:%d " % args_in.port, code)
+
+        print_url()
 
         args = ["shell",
                 class_path,
