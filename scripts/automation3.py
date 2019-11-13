@@ -77,7 +77,7 @@ def identifyDevice():
                 "Please specify the serial number of target device you want to use ('-s serial_number').")
 
 def print_url():
-    (rc, out, _) = run_adb(["shell", "ifconfig | grep -o 'inet addr:[0-9|.]*' | cut -d':' -f2 | tail -1 | tr -d '\n'"])
+    (rc, out, _) = run_adb(["shell", "ifconfig | grep -o 'inet addr:[0-9|.]*' | cut -d':' -f2 | sed -n 2p | tr -d '\n'"])
     print (("\n>>> Share the url 'http://%s:%d/screenshot' to see the live screen! <<<\n") % (out, args_in.port))
 
 def automate():
