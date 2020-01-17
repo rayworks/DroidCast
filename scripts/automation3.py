@@ -42,8 +42,8 @@ def locateApkPath():
     (rc, out, _) = run_adb(["shell", "pm",
                             "path",
                             "com.rayworks.droidcast"])
-    if (rc):
-        raise RuntimeError("Locating apk failure")
+    if rc or out == "":
+        raise RuntimeError("Locating apk failure, have you installed the app successfully?")
 
     prefix = "package:"
     postfix = ".apk"
@@ -72,6 +72,10 @@ def identifyDevice():
 
         devicesInfo = str(out)
         deviceCnt = devicesInfo.count('device') - 1
+
+        if deviceCnt < 1:
+            raise RuntimeError("Fail to find devices")
+
         if(deviceCnt > 1 and (not device_serial_no)):
             raise RuntimeError(
                 "Please specify the serial number of target device you want to use ('-s serial_number').")
