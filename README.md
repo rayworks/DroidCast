@@ -106,6 +106,10 @@ Currently `png`, `jpeg` and `webp`, these image types are supported.
 
 [AndroidScreenShot_SysApi](https://github.com/weizongwei5/AndroidScreenShot_SysApi)
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/rayworks/DroidCast.svg)](https://starchart.cc/rayworks/DroidCast)
+
 ## License
 
     Copyright (C) 2018 rayworks
