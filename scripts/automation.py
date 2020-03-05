@@ -16,8 +16,15 @@ parser = argparse.ArgumentParser(
     description='Automation script to activate capturing screenshot of Android device')
 parser.add_argument('-s', '--serial', dest='device_serial',
                     help='Device serial number (adb -s option)')
-parser.add_argument('-p', '--port', dest='port', nargs='?', const=53516, type=int, default=53516,
-                    help='Port number to be connected, by default it\'s 53516')
+parser.add_argument(
+    '-p',
+    '--port',
+    dest='port',
+    nargs='?',
+    const=53516,
+    type=int,
+    default=53516,
+    help='Port number to be connected, by default it\'s 53516')
 args_in = parser.parse_args()
 
 
@@ -38,12 +45,13 @@ def run_adb(args, pipeOutput=True):
     return (p.returncode, stdout, stderr)
 
 
-def locateApkPath():
+def locate_apk_path():
     (rc, out, _) = run_adb(["shell", "pm",
                             "path",
                             "com.rayworks.droidcast"])
     if rc or out == "":
-        raise RuntimeError("Locating apk failure, have you installed the app successfully?")
+        raise RuntimeError(
+            "Locating apk failure, have you installed the app successfully?")
 
     prefix = "package:"
     postfix = ".apk"
@@ -53,12 +61,12 @@ def locateApkPath():
     return "CLASSPATH=" + out[beg + len(prefix):(end + len(postfix))].strip()
 
 
-def openBrowser():
+def open_browser():
     url = 'http://localhost:%d/screenshot' % args_in.port
     webbrowser.open_new(url)
 
 
-def identifyDevice():
+def identify_device():
 
     (rc, out, _) = run_adb(["devices"])
     if(rc):
@@ -80,15 +88,18 @@ def identifyDevice():
             raise RuntimeError(
                 "Please specify the serial number of target device you want to use ('-s serial_number').")
 
+
 def print_url():
-    (rc, out, _) = run_adb(["shell", "ip -f inet addr | grep -o 'inet [0-9|.]*' | cut -d' ' -f2 | sed -n 2p | tr -d '\n'"])
+    (rc, out, _) = run_adb(
+        ["shell", "ip -f inet addr | grep -o 'inet [0-9|.]*' | cut -d' ' -f2 | sed -n 2p | tr -d '\n'"])
     print "\n>>> Share the url 'http://{0}:{1}/screenshot' to see the live screen! <<<\n".format(str(out), args_in.port)
+
 
 def automate():
     try:
-        identifyDevice()
+        identify_device()
 
-        class_path = locateApkPath()
+        class_path = locate_apk_path()
 
         (code, _, err) = run_adb(
             ["forward", "tcp:%d" % args_in.port, "tcp:%d" % args_in.port])
@@ -104,7 +115,7 @@ def automate():
                 "--port=%d" % args_in.port]
 
         # delay opening the web page
-        t = Timer(2, openBrowser)
+        t = Timer(2, open_browser)
         t.start()
 
         # event loop starts
@@ -114,7 +125,7 @@ def automate():
             ["forward", "--remove", "tcp:%d" % args_in.port])
         print(">>> adb unforward tcp:%d " % args_in.port, code)
 
-    except (Exception), e:
+    except (Exception) as e:
         print e
 
 
