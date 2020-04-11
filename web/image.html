@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html>
 
-<header>
+<head>
     <title>Screenshot</title>
     <meta name="viewport" content="width=device-width, minimum-scale=0.1">
-</header>
+    <link rel="stylesheet" href="styles/layout.css" type="text/css" media="screen">
+</head>
 
-<body style="background: #0e0e0e;">
+<body class="centered-wrapper">
+<div class="centered-content">
+    <h2>Display the screenshot via WebSocket</h2>
 
-    <h2 style="color: #ffffff;">Display the screenshot via WebSocket</h2>
-
-    <p style="color: #ffffff;">*Tips: rotate your connected device to see the updated screenshot :)</p>
+    <p>*Tips: rotate your connected device to see the updated screenshot :)</p>
 
     <div class="container">
-        <img  onclick="resize()" id="image" alt="Droid screenshot">
+        <img onclick="resize()" id="image" alt="Droid screenshot">
     </div>
 
     <script>
@@ -32,51 +33,59 @@
                 img.height = img.height * 2;
             }
         }
+
+
+
     </script>
 
     <script type='text/javascript' src='./util.js'></script>
 
     <script>
-        var socket = new WebSocket('ws://localhost:53516/src');
-        socket.binaryType = 'arraybuffer';
+            var socket = new WebSocket('ws://localhost:53516/src');
+            socket.binaryType = 'arraybuffer';
 
-        try {
-            socket.onopen = function () {
-                console.log("on open");
-            }
-
-            socket.onmessage = function (msg) {
-                if (typeof msg.data === "string") {
-                    var dimension = JSON.parse(msg.data);
-                    console.log(dimension);
-
-                    var image = document.getElementById('image');
-                    image.width = dimension.width / 2;
-                    image.height = dimension.height / 2;
-
-                    image.style = "-webkit-user-select: none;cursor: zoom-in;"
+            try {
+                socket.onopen = function () {
+                    console.log("on open");
                 }
 
-                if (msg.data instanceof ArrayBuffer) {
-                    var arrayBuffer = msg.data;
-                    var bytes = new Uint8Array(arrayBuffer);
+                socket.onmessage = function (msg) {
+                    if (typeof msg.data === "string") {
+                        var dimension = JSON.parse(msg.data);
+                        console.log(dimension);
 
-                    var image = document.getElementById('image');
-                    image.src = 'data:image/jpeg;base64,' + encode(bytes);
+                        var image = document.getElementById('image');
+                        image.width = dimension.width / 2;
+                        image.height = dimension.height / 2;
+
+                        image.style = "-webkit-user-select: none;cursor: zoom-in;"
+                    }
+
+                    if (msg.data instanceof ArrayBuffer) {
+                        var arrayBuffer = msg.data;
+                        var bytes = new Uint8Array(arrayBuffer);
+
+                        var image = document.getElementById('image');
+                        image.src = 'data:image/jpeg;base64,' + encode(bytes);
+                    }
                 }
+
+                socket.onclose = function () {
+                    console.log("on closed");
+                }
+
+                socket.onerror = function () {
+                    console.log("socket error");
+                }
+            } catch (exception) {
+                alert('Error:' + exception);
             }
 
-            socket.onclose = function () {
-                console.log("on closed");
-            }
 
-            socket.onerror = function () {
-                console.log("socket error");
-            }
-        } catch (exception) {
-            alert('Error:' + exception);
-        }
+
     </script>
+</div>
+
 </body>
 
 </html>
