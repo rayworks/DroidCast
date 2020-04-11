@@ -1,5 +1,6 @@
 package com.rayworks.droidcast;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -18,6 +19,7 @@ import java.lang.reflect.Method;
 
     private IWindowManager iWindowManager;
 
+    @SuppressLint("PrivateApi")
     public DisplayUtil() {
         Class<?> serviceManagerClass = null;
 
@@ -29,8 +31,7 @@ import java.lang.reflect.Method;
             // WindowManager
             Object ws = getService.invoke(null, Context.WINDOW_SERVICE);
 
-            Object localObject = IWindowManager.Stub.asInterface((IBinder) ws);
-            iWindowManager = (IWindowManager) localObject;
+            iWindowManager = IWindowManager.Stub.asInterface((IBinder) ws);
 
         } catch (Exception e) {
             e.printStackTrace();

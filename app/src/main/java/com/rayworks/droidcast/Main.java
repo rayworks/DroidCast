@@ -5,9 +5,11 @@ import android.graphics.Point;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
+
 import android.text.TextUtils;
 
 import com.koushikdutta.async.AsyncServer;
@@ -25,7 +27,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Locale;
 
-/** Created by seanzhou on 3/14/17. */
+/**
+ * Created by seanzhou on 3/14/17.
+ */
 public class Main {
     private static final String sTAG = Main.class.getName();
 
@@ -72,38 +76,23 @@ public class Main {
 
         httpServer.websocket(
                 "/src",
-                new AsyncHttpServer.WebSocketRequestCallback() {
-                    @Override
-                    public void onConnected(WebSocket webSocket, AsyncHttpServerRequest request) {
+                (webSocket, request) -> {
 
-                        Pair<Integer, Integer> pair = getDimension();
+                    Pair<Integer, Integer> pair = getDimension();
+                    displayUtil.setRotateListener(
+                            rotate -> {
+                                System.out.println(">>> rotate to " + rotate);
 
-                        displayUtil.setRotateListener(
-                                new DisplayUtil.RotateListener() {
-                                    @Override
-                                    public void onRotate(int rotate) {
-                                        System.out.println(">>> rotate to " + rotate);
+                                // delay for the new rotated screen
+                                handler.postDelayed(
+                                        () -> {
+                                            Pair<Integer, Integer> dimen = getDimension();
+                                            sendScreenshotData(webSocket, dimen.first, dimen.second);
+                                        },
+                                        SCREENSHOT_DELAY_MILLIS);
+                            });
 
-                                        // delay for the new rotated screen
-                                        handler.postDelayed(
-                                                new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        Pair<Integer, Integer> dimen =
-                                                                getDimension();
-
-                                                        sendScreenshotData(
-                                                                webSocket,
-                                                                dimen.first,
-                                                                dimen.second);
-                                                    }
-                                                },
-                                                SCREENSHOT_DELAY_MILLIS);
-                                    }
-                                });
-
-                        sendScreenshotData(webSocket, pair.first, pair.second);
-                    }
+                    sendScreenshotData(webSocket, pair.first, pair.second);
                 });
 
         httpServer.listen(server, port);
@@ -112,8 +101,6 @@ public class Main {
     }
 
     private static void resolveArgs(String[] args) {
-        // System.out.println(Arrays.toString(args));
-
         if (args.length > 0) {
             String[] params = args[0].split("=");
 
@@ -142,27 +129,22 @@ public class Main {
     }
 
     private static void sendScreenshotData(WebSocket webSocket, int width, int height) {
-
         try {
             byte[] inBytes =
                     getScreenImageInBytes(
                             Bitmap.CompressFormat.JPEG,
                             width,
                             height,
-                            new ImageDimensionListener() {
-                                @Override
-                                public void onResolveDimension(
-                                        int width, int height, int rotation) {
-                                    JSONObject obj = new JSONObject();
-                                    try {
-                                        obj.put("width", width);
-                                        obj.put("height", height);
-                                        obj.put("rotation", rotation);
+                            (w, h, rotation) -> {
+                                JSONObject obj = new JSONObject();
+                                try {
+                                    obj.put("width", w);
+                                    obj.put("height", h);
+                                    obj.put("rotation", rotation);
 
-                                        webSocket.send(obj.toString());
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
+                                    webSocket.send(obj.toString());
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
                             });
             webSocket.send(inBytes);
