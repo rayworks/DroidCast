@@ -4,8 +4,10 @@ import android.graphics.Point;
 import android.view.IRotationWatcher;
 
 /***
- * Define this existing aidl file to mock the system hidden APIs.
- * NB: the system's actual IWindowManager will be used.
+ * Define this same aidl file here to make it compiling when calling system hidden APIs.
+ *
+ * According to the 'delegation model' for loading classes on Java plattform, the actual
+ * implementation of IWindowManager from the Framework will be applied.
  */
 interface IWindowManager {
 
