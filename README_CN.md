@@ -15,7 +15,7 @@
 
 ## 快速上手
 
-- 连接你的设 Android 设备或是模拟器
+- 连接你的 Android 设备或是模拟器
 
 - 安装 Apk
 
@@ -32,6 +32,14 @@ python scripts/automation.py
 ```
 
 然后，默认浏览器将会打开，你就能看到截屏了。
+
+- (可选) 指定已连接的单台设备以及设置截屏服务端口
+
+```
+python scripts/automation.py -p 12346 -s 'your-device-id'
+```
+详细请查看 `python scripts/automation.py -h`
+
 
 ## 同网段 WIFI 环境下无线配置使用：
 

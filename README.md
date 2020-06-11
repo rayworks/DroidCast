@@ -35,6 +35,13 @@ python scripts/automation.py
 
 After that, the default web browser will be opened. You should see the screenshot now.
 
+- (Optional) Specify the target connected device and set the port of ScreenShot service
+
+```
+python scripts/automation.py -p 12346 -s 'your-device-id'
+```
+For more info, `python scripts/automation.py -h`
+
 ## Use it wirelessly :
 
 - Get your device IP address (in Settings - System - About phone - Status) e.g : `192.168.x.x`
