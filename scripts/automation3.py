@@ -7,6 +7,7 @@
 import subprocess
 import webbrowser
 import argparse
+import signal
 
 from threading import Timer
 
@@ -96,8 +97,16 @@ def print_url():
         ("\n>>> Share the url 'http://%s:%d/screenshot' to see the live screen! <<<\n") %
         (out, args_in.port))
 
-
+def handler(signum, frame):
+    print('\n>>> Signal caught: ', signum)
+    (code, out, err) = run_adb(
+            ["forward", "--remove", "tcp:%d" % args_in.port])
+    print(">>> adb unforward tcp:%d " % args_in.port, code)
+    
 def automate():
+    # handle the keyboard interruption explicitly
+    signal.signal(signal.SIGINT, handler)
+
     try:
         identify_device()
 
@@ -122,10 +131,6 @@ def automate():
 
         # event loop starts
         run_adb(args, pipeOutput=False)
-
-        (code, out, err) = run_adb(
-            ["forward", "--remove", "tcp:%d" % args_in.port])
-        print(">>> adb unforward tcp:%d " % args_in.port, code)
 
     except (Exception) as e:
         print(e)
