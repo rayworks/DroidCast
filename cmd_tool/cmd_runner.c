@@ -135,6 +135,8 @@ void wait_for_child_process(pid_t proc, char *p_cmd)
 
 static void handler(int sig)
 {
+    printf("\n> signal caught : %d\n", sig);
+
     int count = 0;
 
     /*
@@ -184,7 +186,7 @@ static void handler(int sig)
 
 // Use a pipe to communicate between a parent and child process (via Android Package Manager) for
 // retrieving the actual installed apk path.
-static int resovle_apk_path()
+static int resolve_apk_path()
 {
     char cmd[BUF_SIZE];
     const char *cmd_fmt = "%s shell pm path com.rayworks.droidcast";
@@ -269,7 +271,7 @@ void sleep_ext(unsigned int seconds, void (*func)(int))
 
 int main(int argc, char *argv[])
 {
-    if (resovle_apk_path() == 0)
+    if (resolve_apk_path() == 0)
     {
         perror("Apk not found, exit now\n");
         exit(-1);
@@ -293,6 +295,14 @@ int main(int argc, char *argv[])
     if (signal(SIGCHLD, handler) == SIG_ERR)
     {
         perror("error: signal SIGCHLD");
+        exit(EXIT_FAILURE);
+    }
+    if (signal(SIGINT, handler) == SIG_ERR)
+    {
+        // SIGINT will kill the child process which already ran with 'execvp' (the handler
+        // function won't be inherited anymore); for parent process, just ignore this signal
+        // and wait for the quitting of the child.
+        perror("error: signal SIGINT");
         exit(EXIT_FAILURE);
     }
 
