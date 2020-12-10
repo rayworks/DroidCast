@@ -234,8 +234,35 @@ static int resolve_apk_path()
         }
     }
 
-    if (pclose(pfin) == -1)
+    int ret = pclose(pfin);
+    if (ret == -1)
+    {
         err_sys("pclose err");
+    }
+    else if (ret == 127)
+    {
+        fprintf(stderr, "bad command : %s\n", cmd);
+        exit(1);
+    }
+    else if (ret != 0)
+    {
+        printf("exit status : %d\n", ret);
+        if (WIFEXITED(ret))
+            printf("Normal termination, exit status = %d\n", WEXITSTATUS(ret));
+        else if (WIFSIGNALED(ret))
+        {
+            printf("abnoraml termination, signal number : %d%s\n", WTERMSIG(ret),
+#ifdef WCOREDUMP
+                   WCOREDUMP(ret) ? "Core file generated" : ""
+#else
+                   "");
+#endif
+            );
+        }
+
+        err_msg("Fatal error: Apk path can't be retrieved, Have you installed the app successfully?");
+        exit(-1);
+    }
 
     if (readCnt > 0)
     {
