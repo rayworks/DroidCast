@@ -90,8 +90,10 @@ def identify_device():
 
 
 def print_url():
+    # ip route:
+    # e.g. 192.168.0.0/24 dev wlan0 proto kernel scope link src 192.168.0.125
     (rc, out, _) = run_adb(
-        ["shell", "ip -f inet addr | grep -o 'inet [0-9|.]*' | cut -d' ' -f2 | sed -n 2p | tr -d '\n'"])
+        ["shell", "ip route | awk '/wlan*/{ print $9 }'| tr -d '\n'"])
     print "\n>>> Share the url 'http://{0}:{1}/screenshot' to see the live screen! <<<\n".format(str(out), args_in.port)
 
 
