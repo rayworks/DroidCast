@@ -10,6 +10,9 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders += [APP_ICON: "@mipmap/ic_launcher"]
+        manifestPlaceholders += [APP_ROUND_ICON: "@mipmap/ic_launcher_round"]
     }
     buildTypes {
         release {
@@ -22,9 +25,43 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    flavorDimensions "product", "level"
+
+    productFlavors {
+        paid {
+            dimension "product"
+        }
+        free {
+            dimension "product"
+        }
+
+        advance {
+            dimension "level"
+        }
+
+        basic {
+            dimension "level"
+        }
+    }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("debug")) {
+        println(">>> " + it.flavorName)
+
+        def flavor = it.flavorName.toLowerCase()
+        if (flavor.contains("free") && flavor.contains("advance")) {
+            println(">>> " + it.flavorName + " matched!")
+            it.manifestPlaceholders.APP_ICON = "@mipmap/ic_launcher_new"
+            it.manifestPlaceholders.APP_ROUND_ICON = "@mipmap/ic_launcher_round_new"
+        }
+    }
 }
 
 dependencies {
+    compileOnly('com.android.tools.build:gradle:4.2.1')
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
         exclude group: 'com.android.support', module: 'support-annotations'
