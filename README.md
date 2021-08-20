@@ -4,6 +4,8 @@
 
 [中文文档](/README_CN.md)
 
+⚠️ Some hidden methods have been called via reflection which may break as Android OS evolves.
+
 An experimental demo for capturing and displaying screenshot of Android devices in the WebBrowser. 
 It's compatible with Android OS 4.0+ and could be used as a convenient tool for taking a batch of 
 screenshots by different image formats && dimensions, reporting bugs and reviewing app features.  
