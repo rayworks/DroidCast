@@ -2,6 +2,7 @@ package com.rayworks.droidcast;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
@@ -166,12 +167,11 @@ public class Main {
         Bitmap bitmap = ScreenCaptorUtils.screenshot(destWidth, destHeight);
 
         if (bitmap == null) {
-            System.out.println(
-                    String.format(
-                            Locale.ENGLISH,
-                            ">>> failed to generate image with resolution %d:%d",
-                            Main.width,
-                            Main.height));
+            System.out.printf(
+                    Locale.ENGLISH,
+                    ">>> failed to generate image with resolution %d:%d%n",
+                    Main.width,
+                    Main.height);
 
             destWidth /= 2;
             destHeight /= 2;
@@ -179,14 +179,13 @@ public class Main {
             bitmap = ScreenCaptorUtils.screenshot(destWidth, destHeight);
         }
 
-        System.out.println(
-                String.format(
-                        Locale.ENGLISH,
-                        "Bitmap generated with resolution %d:%d, process id %d | thread id %d",
-                        destWidth,
-                        destHeight,
-                        Process.myPid(),
-                        Process.myTid()));
+        System.out.printf(
+                Locale.ENGLISH,
+                "Bitmap generated with resolution %d:%d, process id %d | thread id %d%n",
+                destWidth,
+                destHeight,
+                Process.myPid(),
+                Process.myTid());
 
         int screenRotation = displayUtil.getScreenRotation();
 
@@ -319,8 +318,12 @@ public class Main {
                 response.send(formatInfo.second, bytes);
 
             } catch (Exception e) {
+                e.printStackTrace();
+
                 response.code(500);
-                response.send(e.toString());
+                String template = ":(  Failed to generate the screenshot on device / emulator : %s - %s - Android OS : %s";
+                String error = String.format(Locale.ENGLISH, template, Build.MANUFACTURER, Build.DEVICE, Build.VERSION.RELEASE);
+                response.send(error);
             }
         }
     }
