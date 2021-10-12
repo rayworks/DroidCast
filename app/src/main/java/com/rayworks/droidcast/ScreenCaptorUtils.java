@@ -1,5 +1,6 @@
 package com.rayworks.droidcast;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.ColorSpace;
 import android.graphics.Rect;
@@ -16,6 +17,7 @@ import java.lang.reflect.Method;
 /**
  * Created by seanzhou on 3/14/17.
  */
+@SuppressLint("PrivateApi")
 public final class ScreenCaptorUtils {
 
     private static final String METHOD_SCREENSHOT = "screenshot";

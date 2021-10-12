@@ -4,13 +4,13 @@
 
 [中文文档](/README_CN.md)
 
-⚠️ Some hidden methods have been called via reflection which may break as Android OS evolves.
-
 An experimental demo for capturing and displaying screenshot of Android devices in the WebBrowser. 
 It's compatible with Android OS 4.0+ and could be used as a convenient tool for taking a batch of 
 screenshots by different image formats && dimensions, reporting bugs and reviewing app features.  
 
-![](/screen_shot_dock.png)
+⚠️ Some hidden methods have been called via reflection which may break as Android OS evolves.
+
+![](./screen_shot_dock.png)
 
 ## Dependencies
 
@@ -23,7 +23,7 @@ screenshots by different image formats && dimensions, reporting bugs and reviewi
 
 - Install the apk
 
-Download and install the prebuilt apk from [here](/apk/DroidCast-debug-1.0.apk) or install it directly:
+Download and install the prebuilt apk from [here](./apk/DroidCast-debug-1.1.0.apk) or install it directly:
 
 ```
 ./gradlew clean installDebug

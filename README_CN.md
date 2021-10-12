@@ -6,7 +6,9 @@
 4.0 及以上系统版本。它支持按照多种图片格式和指定大小实时截屏，是批量截图，上报bug以及
 演示 app 功能页面的首选工具。
 
-![](/screen_shot_dock.png)
+⚠️ 代码中通过反射调用了一些系统隐藏的方法，相关功能可能会随着 Android 系统接口的变化而受到影响.
+
+![](./screen_shot_dock.png)
 
 ## 依赖
 
@@ -19,7 +21,7 @@
 
 - 安装 Apk
 
-从 [这里](/apk/DroidCast-debug-1.0.apk) 下载并安装应用，或是直接通过命令行安装:
+从 [这里](./apk/DroidCast-debug-1.1.0.apk) 下载并安装应用，或是直接通过命令行安装:
 
 ```
 ./gradlew clean installDebug
