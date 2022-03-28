@@ -1,9 +1,14 @@
 use std::env;
 use std::process::Command;
 
+use std::{error::Error, thread};
+use signal_hook::{iterator::Signals, consts::SIGINT};
+
 use webbrowser;
 
 fn main() {
+    setup_signal_handler().expect("Failed to set up signal handler");
+
     let args: Vec<String> = env::args().collect();
     println!(">>> args {:?}", args);
 
@@ -41,11 +46,21 @@ fn main() {
     println!("Path {}", full_path);
 
     // forward
-    let grp = String::from("tcp:") + &port;
-    let params_fwd = vec!["forward", &grp.trim(), &grp.trim()];
-    println!("Params -> {:?}", params_fwd);
-    Command::new("adb").args(params_fwd).output().expect("Failed to forward the tcp connection");
+    forward_connection(&port);
 
+    let timer = timer::Timer::new();
+    let guard = timer.schedule_with_delay(chrono::Duration::seconds(2), open_browser);
+
+    startup_service_and_wait(&port, full_path);
+
+    // unforward
+    unforward_connection(&port);
+
+    drop(guard);
+    println!("About to quit the app");
+}
+
+fn startup_service_and_wait(port: &String, full_path: String) {
     // app_process
     let port_param = String::from("--port=") + &port;
     let params = vec![
@@ -58,9 +73,6 @@ fn main() {
     ];
     println!("Params -> {:?}", params);
 
-    let timer = timer::Timer::new();
-    let guard = timer.schedule_with_delay(chrono::Duration::seconds(2), open_browser);
-
     let result = Command::new("adb").args(params)
         .spawn()
         .unwrap()
@@ -68,9 +80,34 @@ fn main() {
         .expect("Failed to wait for a Child Process");
 
     println!("status: {}", result.status);
+}
 
-    drop(guard);
-    println!("About to quit the app");
+fn forward_connection(port: &String) {
+    let grp = String::from("tcp:") + &port;
+    let params_fwd = vec!["forward", &grp.trim(), &grp.trim()];
+    println!("Params -> {:?}", params_fwd);
+
+    Command::new("adb").args(params_fwd).output().expect("Failed to forward the tcp connection");
+}
+
+fn unforward_connection(port: &String) {
+    let tcp = format!("tcp:{}", &port);
+    let params_fwd = vec!["forward", "--remove", &tcp];
+
+    let status = Command::new("adb").args(params_fwd).output().unwrap().status;
+    println!("adb unforward action status : {:?}", status);
+}
+
+fn setup_signal_handler() -> Result<(), Box<dyn Error>> {
+    let mut signals = Signals::new(&[SIGINT])?;
+
+    thread::spawn(move || {
+        for sig in signals.forever() {
+            println!("\nReceived signal {:?}", sig);
+        }
+    });
+
+    Ok(())
 }
 
 fn open_browser() {
