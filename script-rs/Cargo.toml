@@ -9,6 +9,6 @@ edition = "2021"
 webbrowser = "0.6.0"
 
 timer = "0.2.0"
-chrono = "0.4.19"
+chrono = "0.4.22"
 
-signal-hook = "0.3.13"
+signal-hook = "0.3.14"
