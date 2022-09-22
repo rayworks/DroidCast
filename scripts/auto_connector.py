@@ -89,7 +89,7 @@ def retrieve_ip():
 
 def handler(signum, frame):
     print('\n>>> Signal caught: ', signum)
-    if not ip:
+    if ip:
         (_, out, err) = run_adb(['disconnect', ip])
     print(">>> Device disconnected from %d" % ip)
 
