@@ -2,6 +2,7 @@ use std::env;
 use std::process::Command;
 
 use std::{error::Error, thread};
+use std::time::Duration;
 use signal_hook::{iterator::Signals, consts::SIGINT};
 
 use webbrowser;
@@ -41,15 +42,19 @@ fn main() {
     // forward
     forward_connection(&port);
 
-    let timer = timer::Timer::new();
-    let guard = timer.schedule_with_delay(chrono::Duration::seconds(2), open_browser);
+    let handle = thread::spawn(|| {
+        thread::sleep(Duration::from_secs(2));
+
+        println!("Open the browser on the worker thread");
+        open_browser();
+    });
 
     startup_service_and_wait(&port, full_path);
 
     // unforward
     unforward_connection(&port);
 
-    drop(guard);
+    handle.join().unwrap();
     println!("About to quit the app");
 }
 
