@@ -67,10 +67,13 @@ public final class ScreenCaptorUtils {
 
                 Class<?> hdBufferClass = hdBuffer.getClass();
                 ColorSpace colorSpace = (ColorSpace) hdBufferClass.getDeclaredMethod("getColorSpace").invoke(hdBuffer);
-                HardwareBuffer hardwareBuffer = (HardwareBuffer) hdBufferClass.getDeclaredMethod("getHardwareBuffer").invoke(hdBuffer);
 
-                bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace);
-
+                try (HardwareBuffer hardwareBuffer =
+                             (HardwareBuffer) hdBufferClass.getDeclaredMethod("getHardwareBuffer").invoke(hdBuffer)) {
+                    bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             } else if (sdkInt >= Build.VERSION_CODES.P) { // Pie+
                 declaredMethod =
                         clazz.getDeclaredMethod(
