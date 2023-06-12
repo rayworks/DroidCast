@@ -12,5 +12,5 @@ See more about [`Unit tests` with `Meson`](http://mesonbuild.com/Unit-tests.html
 
 ## Dependencies
 
-*  [Meson](https://mesonbuild.com/Getting-meson.html)
-*  [Ninja](https://ninja-build.org) (version 1.5 or newer)
+*   [Meson](https://mesonbuild.com/Getting-meson.html)
+*   [Ninja](https://ninja-build.org) (version 1.5 or newer)
