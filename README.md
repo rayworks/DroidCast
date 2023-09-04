@@ -24,7 +24,7 @@ As Android 13 imposes [Non-SDK restrictions](https://developer.android.google.cn
 *   Connect your device/emulator
 *   Install the apk
 
-Download and install the prebuilt apk from [here](./apk/DroidCast-debug-1.1.0.apk) or install it directly:
+Download and install the prebuilt apk from [here](./apk/DroidCast-debug-1.1.1.apk) or install it directly:
 
     ./gradlew clean installDebug
 
