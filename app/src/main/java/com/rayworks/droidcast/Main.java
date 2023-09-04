@@ -162,6 +162,13 @@ public class Main {
             @Nullable ImageDimensionListener resolver)
             throws IOException {
 
+        int screenRotation = displayUtil.getScreenRotation();
+        if (screenRotation != 0 && screenRotation != 2) { // not portrait
+            int len = w;
+            w = h;
+            h = len;
+        }
+
         int destWidth = w;
         int destHeight = h;
         Bitmap bitmap = ScreenCaptorUtils.screenshot(destWidth, destHeight);
@@ -186,24 +193,6 @@ public class Main {
                 destHeight,
                 Process.myPid(),
                 Process.myTid());
-
-        int screenRotation = displayUtil.getScreenRotation();
-
-        if (screenRotation != 0) {
-            switch (screenRotation) {
-                case 1: // 90 degree rotation (counter-clockwise)
-                    bitmap = displayUtil.rotateBitmap(bitmap, -90f);
-                    break;
-                case 3: // 270 degree rotation
-                    bitmap = displayUtil.rotateBitmap(bitmap, 90f);
-                    break;
-                case 2: // 180 degree rotation
-                    bitmap = displayUtil.rotateBitmap(bitmap, 180f);
-                    break;
-                default:
-                    break;
-            }
-        }
 
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
