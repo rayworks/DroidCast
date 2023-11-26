@@ -10,6 +10,8 @@ import android.os.IBinder;
 
 import androidx.annotation.RequiresApi;
 
+import com.rayworks.droidcast.wrapper.DisplayControl;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,7 +19,7 @@ import java.lang.reflect.Method;
 /**
  * Created by seanzhou on 3/14/17.
  */
-@SuppressLint("PrivateApi")
+@SuppressLint({"BlockedPrivateApi", "PrivateApi"})
 public final class ScreenCaptorUtils {
 
     private static final String METHOD_SCREENSHOT = "screenshot";
@@ -29,7 +31,9 @@ public final class ScreenCaptorUtils {
         try {
             String className;
             int sdkInt = Build.VERSION.SDK_INT;
-            if (sdkInt > Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            if (sdkInt >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                className = "android.window.ScreenCapture";
+            } else if (sdkInt > Build.VERSION_CODES.JELLY_BEAN_MR1) {
                 className = "android.view.SurfaceControl";
             } else {
                 className = "android.view.Surface";
@@ -51,8 +55,16 @@ public final class ScreenCaptorUtils {
             int sdkInt = Build.VERSION.SDK_INT;
             if (sdkInt >= Build.VERSION_CODES.S) {
                 // create the DisplayCaptureArgs object by DisplayCaptureArgs$Builder.build()
-                Class<?> argsClass = Class.forName("android.view.SurfaceControl$DisplayCaptureArgs");
-                Class<?> innerClass = Class.forName("android.view.SurfaceControl$DisplayCaptureArgs$Builder");
+                Class<?> argsClass;
+                Class<?> innerClass;
+                if (sdkInt >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    argsClass = Class.forName("android.window.ScreenCapture$DisplayCaptureArgs");
+                    innerClass = Class.forName("android.window.ScreenCapture$DisplayCaptureArgs$Builder");
+                } else {
+                    argsClass = Class.forName("android.view.SurfaceControl$DisplayCaptureArgs");
+                    innerClass = Class.forName("android.view.SurfaceControl$DisplayCaptureArgs$Builder");
+                }
+
                 Method setSzMethod = innerClass.getDeclaredMethod("setSize", int.class, int.class);
                 Method buildMethod = innerClass.getDeclaredMethod("build");
 
@@ -117,8 +129,23 @@ public final class ScreenCaptorUtils {
     public static IBinder getBuiltInDisplay() {
 
         try {
+            int sdkInt = Build.VERSION.SDK_INT;
+            if (sdkInt >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                long[] displayIds = DisplayControl.getPhysicalDisplayIds();
+                if (displayIds != null) {
+                    for (long id : displayIds) {
+                        IBinder binder = DisplayControl.getPhysicalDisplayToken(id);
+                        if (binder != null)
+                            return binder;
+                    }
+                }
+
+                // fall back to the default id
+                return DisplayControl.getPhysicalDisplayToken(0);
+            }
+
             Method method = getGetBuiltInDisplayMethod();
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (sdkInt < Build.VERSION_CODES.Q) {
                 // default display 0
                 return (IBinder) method.invoke(null, 0);
             }
