@@ -10,8 +10,6 @@ screenshots by different image formats && dimensions, reporting bugs and reviewi
 
 ⚠️ Some hidden methods have been called via reflection which may break as Android OS evolves.
 
-As Android 13 imposes [Non-SDK restrictions](https://developer.android.google.cn/about/versions/13/changes/non-sdk-13?hl=en#list-changes), from functional perspective, it may be more feasible to establish [the Server](./scripts/screencap_server.py) on your local machine to capture and transmit image data (via `adb` tool), rather than struggling with the SDK and activating the Server on the device.
-
 ![](./screen_shot_dock.png)
 
 ## Dependencies
