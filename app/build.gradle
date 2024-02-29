@@ -7,8 +7,8 @@ android {
         applicationId "com.rayworks.droidcast"
         minSdkVersion 14
         targetSdkVersion 34
-        versionCode 129
-        versionName "1.2.0"
+        versionCode 131
+        versionName "1.2.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
