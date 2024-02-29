@@ -20,7 +20,7 @@
 *   连接你的 Android 设备或是模拟器
 *   安装 Apk
 
-从 [这里](./apk/DroidCast-debug-1.2.0.apk) 下载并安装应用，或是直接通过命令行安装:
+从 [这里](./apk/DroidCast-debug-1.2.1.apk) 下载并安装应用，或是直接通过命令行安装:
 
     ./gradlew clean installDebug
 

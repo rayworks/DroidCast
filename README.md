@@ -22,7 +22,7 @@ screenshots by different image formats && dimensions, reporting bugs and reviewi
 *   Connect your device/emulator
 *   Install the apk
 
-Download and install the prebuilt apk from [here](./apk/DroidCast-debug-1.2.0.apk) or install it directly:
+Download and install the prebuilt apk from [here](./apk/DroidCast-debug-1.2.1.apk) or install it directly:
 
     ./gradlew clean installDebug
 
