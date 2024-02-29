@@ -63,7 +63,7 @@ public class Main {
                     }
                 };
 
-        Looper.prepare();
+        Looper.prepareMainLooper();
 
         looper = Looper.myLooper();
         System.out.println(">>> DroidCast main entry");
