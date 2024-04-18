@@ -113,6 +113,15 @@ Currently `png`, `jpeg` and `webp`, these image types are supported.
 
 [AndroidScreenShot\_SysApi](https://github.com/weizongwei5/AndroidScreenShot_SysApi)
 
+## Donation
+<details> <summary>Buy me a coffee ☕️</summary>
+
+<div align="center">
+  <img src="./images/payment_cn.jpg" width=386px height=230px>
+</div>
+
+</details>
+
 ## Stargazers over time
 
 [![Stargazers over time](https://starchart.cc/rayworks/DroidCast.svg)](https://starchart.cc/rayworks/DroidCast)

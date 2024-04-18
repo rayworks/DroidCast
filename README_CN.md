@@ -110,6 +110,15 @@
 
 [AndroidScreenShot\_SysApi](https://github.com/weizongwei5/AndroidScreenShot_SysApi)
 
+## 赞助开发
+<details> <summary>请我喝杯咖啡 ☕️</summary>
+
+<div align="center">
+  <img src="./images/payment_cn.jpg" width=386px height=230px>
+</div>
+
+</details>
+
 ## License
 
     Copyright (C) 2018 rayworks
