@@ -26,6 +26,17 @@ parser.add_argument(
     type=int,
     default=53516,
     help='Port number to be connected, by default it\'s 53516')
+
+parser.add_argument (
+    '-d',
+    '--display_id',
+    dest='display_id',
+    nargs='?',
+    const=0,
+    type=int,
+    default=0,
+    help='Display Id, by default it\'s 0, the internal display.')
+
 args_in = parser.parse_args()
 
 
@@ -127,7 +138,8 @@ def automate():
                 "app_process",
                 "/",  # unused
                 "com.rayworks.droidcast.Main",
-                "--port=%d" % args_in.port]
+                "--port=%d" % args_in.port,
+                "--display_id=%d" % args_in.display_id]
 
         # delay opening the web page
         t = Timer(2, open_browser)
