@@ -15,6 +15,7 @@ import com.rayworks.droidcast.wrapper.DisplayControl;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * Created by seanzhou on 3/14/17.
@@ -46,7 +47,7 @@ public final class ScreenCaptorUtils {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public static Bitmap screenshot(int w, int h) {
+    public static Bitmap screenshot(int w, int h, long physicalDisplayId) {
         Bitmap bitmap = null;
 
         try {
@@ -69,7 +70,7 @@ public final class ScreenCaptorUtils {
                 Method buildMethod = innerClass.getDeclaredMethod("build");
 
                 Constructor<?> ctor = innerClass.getDeclaredConstructor(IBinder.class);
-                Object builder = ctor.newInstance(getBuiltInDisplay());
+                Object builder = ctor.newInstance(getDisplayToken(physicalDisplayId));
                 setSzMethod.invoke(builder, w, h);
                 Object args = buildMethod.invoke(builder);
 
@@ -126,22 +127,58 @@ public final class ScreenCaptorUtils {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public static IBinder getBuiltInDisplay() {
+    public static IBinder getDisplayToken(long physicalDisplayId) {
 
         try {
             int sdkInt = Build.VERSION.SDK_INT;
             if (sdkInt >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 long[] displayIds = DisplayControl.getPhysicalDisplayIds();
                 if (displayIds != null) {
+                    // respect the specified id
+                    for (long id : displayIds) {
+                        if (id == physicalDisplayId) {
+                            IBinder binder = DisplayControl.getPhysicalDisplayToken(id);
+                            if (binder != null) {
+                                return binder;
+                            }
+                        }
+                    }
+
+                    // fall back to the first valid one
                     for (long id : displayIds) {
                         IBinder binder = DisplayControl.getPhysicalDisplayToken(id);
-                        if (binder != null)
+                        if (binder != null) {
+                            System.out.printf(">>> Valid display id : %d\n", id);
                             return binder;
+                        }
                     }
                 }
 
                 // fall back to the default id
                 return DisplayControl.getPhysicalDisplayToken(0);
+            }
+
+            if (sdkInt >= Build.VERSION_CODES.Q) {
+                Method getPhysicalDisplayMethod = clazz.getMethod("getPhysicalDisplayIds");
+                try {
+                    long[] displayIds = (long[]) getPhysicalDisplayMethod.invoke(null);
+                    System.out.println(">>><<< displayIds " + Arrays.toString(displayIds));
+                    if (displayIds != null && displayIds.length > 0) {
+                        long targetId = displayIds[0];
+                        for (long id : displayIds) {
+                            if (id == physicalDisplayId) {
+                                targetId = id;
+                                break;
+                            }
+                        }
+                        Method getPhysicalTokenMethod = clazz.getMethod("getPhysicalDisplayToken", long.class);
+                        return (IBinder) getPhysicalTokenMethod.invoke(null, targetId);
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                } catch (InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             Method method = getGetBuiltInDisplayMethod();

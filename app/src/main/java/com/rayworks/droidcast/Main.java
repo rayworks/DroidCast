@@ -6,12 +6,11 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
-
-import android.text.TextUtils;
 
 import com.koushikdutta.async.AsyncServer;
 import com.koushikdutta.async.http.Multimap;
@@ -20,12 +19,14 @@ import com.koushikdutta.async.http.server.AsyncHttpServer;
 import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
 import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
 import com.koushikdutta.async.http.server.HttpServerRequestCallback;
+import com.rayworks.droidcast.shell.ShellRunner;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -43,10 +44,14 @@ public class Main {
     private static final int SCREENSHOT_DELAY_MILLIS = 1500;
 
     private static Looper looper;
-    private static int width = 0;
-    private static int height = 0;
+    private static volatile int width = 0;
+    private static volatile int height = 0;
 
     private static int port = 53516;
+    private static int displayId = 0;
+
+    // For physical local displays, stable-id is a type-long identifier.
+    private static long physicalDisplayId = -1L;
 
     private static DisplayUtil displayUtil;
     private static Handler handler;
@@ -102,16 +107,48 @@ public class Main {
     }
 
     private static void resolveArgs(String[] args) {
-        if (args.length > 0) {
-            String[] params = args[0].split("=");
 
-            if ("--port".equals(params[0])) {
-                try {
-                    port = Integer.parseInt(params[1]);
-                    System.out.println(sTAG + " | Port set to " + port);
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
+        for (String arg : args) {
+            String[] params = arg.split("=");
+
+            try {
+                switch (params[0]) {
+                    case "--port":
+                        port = Integer.parseInt(params[1]);
+                        System.out.println(sTAG + " | Port set to " + port);
+                        break;
+
+                    case "--display_id":
+                        displayId = Integer.parseInt(params[1]);
+                        kotlin.Pair<int[], Long> pair = ShellRunner.getDisplayDimension(displayId);
+
+                        if (pair != null) {
+                            int[] dimen = pair.component1();
+                            width = dimen[0];
+                            height = dimen[1];
+
+                            // retrieve the built-in info
+                            int[] size = ShellRunner.getDisplayDimension(0).component1();
+                            float builtInRatio = size[0] * 1.0f / size[1];
+                            float displayRatio = dimen[0] * 1.0f / dimen[1];
+
+                            if (Float.compare(builtInRatio, displayRatio) != 0) {
+                                if (displayRatio > builtInRatio) {
+                                    width = (int) (dimen[1] * builtInRatio);
+                                } else {
+                                    height = (int) (dimen[0] / builtInRatio);
+                                }
+                            }
+                            System.out.printf(">>> device dimens of Display %d, - w: %d, h: %d\n", displayId, dimen[0], dimen[1]);
+
+                            Main.physicalDisplayId = pair.component2();
+                            System.out.printf(">>> selected physical display Id : %d\n", pair.component2());
+                        }
+                        break;
                 }
+            } catch (Exception e) {
+                System.err.println(">>> Failed to resolve args : " + Arrays.toString(args));
+                e.printStackTrace();
             }
         }
     }
@@ -171,7 +208,7 @@ public class Main {
 
         int destWidth = w;
         int destHeight = h;
-        Bitmap bitmap = ScreenCaptorUtils.screenshot(destWidth, destHeight);
+        Bitmap bitmap = ScreenCaptorUtils.screenshot(destWidth, destHeight, physicalDisplayId);
 
         if (bitmap == null) {
             System.out.printf(
@@ -183,7 +220,7 @@ public class Main {
             destWidth /= 2;
             destHeight /= 2;
 
-            bitmap = ScreenCaptorUtils.screenshot(destWidth, destHeight);
+            bitmap = ScreenCaptorUtils.screenshot(destWidth, destHeight, physicalDisplayId);
         }
 
         System.out.printf(
