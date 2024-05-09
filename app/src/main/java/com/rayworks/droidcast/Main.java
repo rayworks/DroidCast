@@ -57,6 +57,8 @@ public class Main {
     private static Handler handler;
 
     public static void main(String[] args) {
+        displayUtil = new DisplayUtil();
+
         resolveArgs(args);
 
         AsyncHttpServer httpServer =
@@ -74,8 +76,6 @@ public class Main {
         System.out.println(">>> DroidCast main entry");
 
         handler = new Handler(looper);
-
-        displayUtil = new DisplayUtil();
 
         AsyncServer server = new AsyncServer();
         httpServer.get("/screenshot", new AnyRequestCallback());
@@ -124,15 +124,17 @@ public class Main {
 
                         if (pair != null) {
                             int[] dimen = pair.component1();
-                            width = dimen[0];
-                            height = dimen[1];
 
-                            // retrieve the built-in info
-                            int[] size = ShellRunner.getDisplayDimension(0).component1();
+                            // retrieve the built-in info (W:H)
+                            Pair<Integer, Integer> dimension = getDimension();
+                            int[] size = new int[]{dimension.first, dimension.second};
                             float builtInRatio = size[0] * 1.0f / size[1];
                             float displayRatio = dimen[0] * 1.0f / dimen[1];
 
-                            if (Float.compare(builtInRatio, displayRatio) != 0) {
+                            if (displayId != 0) {
+                                width = dimen[0];
+                                height = dimen[1];
+
                                 if (displayRatio > builtInRatio) {
                                     width = (int) (dimen[1] * builtInRatio);
                                 } else {
