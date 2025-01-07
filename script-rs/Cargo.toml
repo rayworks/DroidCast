@@ -6,6 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-webbrowser = "0.8.3"
+webbrowser = "1.0.3"
 
-signal-hook = "0.3.14"
+signal-hook = "0.3.17"
