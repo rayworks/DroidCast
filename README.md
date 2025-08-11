@@ -2,7 +2,7 @@
 
 # DroidCast
 
-[中文文档](/README_CN.md)
+[中文文档](/README_CN.md) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/rayworks/droidcast)
 
 An experimental demo for capturing and displaying screenshot of Android devices in the WebBrowser.
 It's compatible with Android OS 4.0+ and could be used as a convenient tool for taking a batch of
