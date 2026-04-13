@@ -2,10 +2,9 @@
 name = "script-rs"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "CLI helper script for DroidCast – forwards ADB connections and opens the live-screen URL in a browser."
+repository = "https://github.com/rayworks/DroidCast"
 
 [dependencies]
 webbrowser = "1.0.3"
-
 signal-hook = "0.3.17"
