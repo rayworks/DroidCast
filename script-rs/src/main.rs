@@ -6,8 +6,6 @@ use std::time::Duration;
 use signal_hook::{iterator::Signals, consts::SIGINT};
 
 fn main() {
-    setup_signal_handler().expect("Failed to set up signal handler");
-
     let args: Vec<String> = env::args().collect();
     println!(">>> args {:?}", args);
 
@@ -40,6 +38,11 @@ fn main() {
 
     // forward
     forward_connection(port, serial);
+
+    // Register the SIGINT handler after the forward is established so that
+    // Ctrl-C always tears down the port forward before the process exits.
+    setup_signal_handler(port.to_string(), serial.map(str::to_string))
+        .expect("Failed to set up signal handler");
 
     // Clone owned values for the worker thread.
     let port_owned = port.to_string();
@@ -165,15 +168,17 @@ fn unforward_connection(port: &str, serial: Option<&str>) {
     println!("adb unforward action status : {:?}", status);
 }
 
-/// Installs a `SIGINT` handler that prints a message when the user presses
-/// Ctrl-C.  The signal is handled on a dedicated background thread so that the
-/// main thread is not interrupted.
-fn setup_signal_handler() -> Result<(), Box<dyn Error>> {
+/// Installs a `SIGINT` handler that removes the active port forward and prints
+/// a message when the user presses Ctrl-C.  The signal is handled on a
+/// dedicated background thread; `port` and `serial` are moved into that thread
+/// so `unforward_connection` can be called before the process exits.
+fn setup_signal_handler(port: String, serial: Option<String>) -> Result<(), Box<dyn Error>> {
     let mut signals = Signals::new([SIGINT])?;
 
     thread::spawn(move || {
         for sig in signals.forever() {
             println!("\nReceived signal {:?}", sig);
+            unforward_connection(&port, serial.as_deref());
         }
     });
 
