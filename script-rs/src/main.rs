@@ -3,7 +3,7 @@ use std::process::Command;
 
 use std::{error::Error, thread};
 use std::time::Duration;
-use signal_hook::{iterator::Signals, consts::SIGINT};
+use signal_hook::{iterator::{Handle, Signals}, consts::SIGINT};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -41,8 +41,9 @@ fn main() {
 
     // Register the SIGINT handler after the forward is established so that
     // Ctrl-C always tears down the port forward before the process exits.
-    setup_signal_handler(port.to_string(), serial.map(str::to_string))
-        .expect("Failed to set up signal handler");
+    let (signal_handle, signals_close) =
+        setup_signal_handler(port.to_string(), serial.map(str::to_string))
+            .expect("Failed to set up signal handler");
 
     // Clone owned values for the worker thread.
     let port_owned = port.to_string();
@@ -56,8 +57,10 @@ fn main() {
 
     startup_service_and_wait(port, full_path, serial);
 
-    // unforward
-    unforward_connection(port, serial);
+    // On a normal (non-SIGINT) exit, close the signals iterator so the handler
+    // thread can return without waiting for another signal.
+    signals_close.close();
+    signal_handle.join().expect("Signal handler thread panicked");
 
     handle.join().expect("Browser thread panicked");
     println!("About to quit the app");
@@ -168,21 +171,27 @@ fn unforward_connection(port: &str, serial: Option<&str>) {
     println!("adb unforward action status : {:?}", status);
 }
 
-/// Installs a `SIGINT` handler that removes the active port forward and prints
-/// a message when the user presses Ctrl-C.  The signal is handled on a
-/// dedicated background thread; `port` and `serial` are moved into that thread
-/// so `unforward_connection` can be called before the process exits.
-fn setup_signal_handler(port: String, serial: Option<String>) -> Result<(), Box<dyn Error>> {
+/// Installs a `SIGINT` handler that removes the active port forward when the
+/// user presses Ctrl-C.  Returns the [`thread::JoinHandle`] for the background
+/// signal-handling thread together with a [`Handle`] that can be used to close
+/// the signals iterator (and thus allow the thread to return) on a clean exit.
+/// `port` and `serial` are moved into the thread so `unforward_connection` can
+/// be called from within the handler.
+fn setup_signal_handler(
+    port: String,
+    serial: Option<String>,
+) -> Result<(thread::JoinHandle<()>, Handle), Box<dyn Error>> {
     let mut signals = Signals::new([SIGINT])?;
+    let handle = signals.handle();
 
-    thread::spawn(move || {
-        for sig in signals.forever() {
+    let join_handle = thread::spawn(move || {
+        if let Some(sig) = signals.forever().next() {
             println!("\nReceived signal {:?}", sig);
             unforward_connection(&port, serial.as_deref());
         }
     });
 
-    Ok(())
+    Ok((join_handle, handle))
 }
 
 /// Retrieves the device's WLAN IP address, prints a shareable URL, and opens
