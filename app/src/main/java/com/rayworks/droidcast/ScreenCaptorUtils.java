@@ -227,9 +227,11 @@ public final class ScreenCaptorUtils {
     }
 
     /** Wraps a reflectively obtained {@link HardwareBuffer} into a {@link Bitmap}. */
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     private static Bitmap wrapScreenshotBuffer(Object hardwareBufferObj, ColorSpace colorSpace) {
         try (HardwareBuffer hardwareBuffer = (HardwareBuffer) hardwareBufferObj) {
+            if (hardwareBuffer == null)
+                return null;
             return Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace);
         }
     }
