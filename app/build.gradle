@@ -2,11 +2,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdk 34
+    compileSdk 36
     defaultConfig {
         applicationId "com.rayworks.droidcast"
         minSdkVersion 14
-        targetSdkVersion 34
+        targetSdkVersion 36
         versionCode 131
         versionName "1.2.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
