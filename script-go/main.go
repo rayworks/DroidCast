@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -50,7 +51,7 @@ func run(args []string) error {
 	fmt.Printf(">>> args %q\n", args)
 
 	if len(args) != 2 && len(args) != 3 {
-		return errors.New("usage : prog port [serial number]")
+		return fmt.Errorf("usage: %s <port> [serial]", filepath.Base(args[0]))
 	}
 
 	port, err := parsePort(args[1])
@@ -380,22 +381,27 @@ func openBrowser(ctx context.Context, port, serial string) {
 	ip := strings.TrimSpace(string(ipBytes))
 	fmt.Printf(">>> Share the url 'http://%s:%s/screenshot' to see the live screen\n", ip, port)
 
+	// Do not open a browser for a service that is being torn down.
+	if ctx.Err() != nil {
+		return
+	}
 	url := fmt.Sprintf("http://localhost:%s/screenshot", port)
-	if err := launchBrowser(url); err != nil {
+	if err := launchBrowser(ctx, url); err != nil && ctx.Err() == nil {
 		fmt.Println("Failed to open browser")
 	}
 }
 
-// launchBrowser opens url with the platform's default handler.
-func launchBrowser(url string) error {
+// launchBrowser opens url with the platform's default handler. The launcher
+// process is bound to ctx so an in-progress launch is stopped on cancellation.
+func launchBrowser(ctx context.Context, url string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
-		cmd = exec.Command("open", url)
+		cmd = exec.CommandContext(ctx, "open", url)
 	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+		cmd = exec.CommandContext(ctx, "rundll32", "url.dll,FileProtocolHandler", url)
 	default:
-		cmd = exec.Command("xdg-open", url)
+		cmd = exec.CommandContext(ctx, "xdg-open", url)
 	}
 	return cmd.Start()
 }
