@@ -2,12 +2,14 @@
 // connection, starts the on-device screenshot service via app_process, and
 // opens the live-screen URL in the default browser.
 //
-// It is a port of script-rs with the same behaviour and command-line contract:
+// It is a port of script-rs with the same command-line contract:
 //
 //	script-go <port> [serial]
 package main
 
 import (
+	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -27,114 +29,204 @@ const (
 	// browserDelay is how long to wait for the on-device service to come up
 	// before opening the browser.
 	browserDelay = 2 * time.Second
+	// cleanupTimeout bounds each adb call made during shutdown so a stalled
+	// adb server cannot keep the tool from exiting.
+	cleanupTimeout = 5 * time.Second
+	// childWaitDelay is how long to wait after interrupting app_process
+	// before killing it outright.
+	childWaitDelay = 3 * time.Second
 )
 
 func main() {
-	args := os.Args
+	if err := run(os.Args); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+// run holds the whole lifecycle so that every exit path, including errors and
+// Ctrl-C, goes through the deferred port-forward cleanup.
+func run(args []string) error {
 	fmt.Printf(">>> args %q\n", args)
 
 	if len(args) != 2 && len(args) != 3 {
-		fmt.Println("usage : prog port [serial number]")
-		return
+		return errors.New("usage : prog port [serial number]")
 	}
 
-	port := strings.TrimSpace(args[1])
-	if _, err := strconv.ParseUint(port, 10, 32); err != nil {
-		fmt.Fprintln(os.Stderr, "The port must be a number.")
-		os.Exit(1)
+	port, err := parsePort(args[1])
+	if err != nil {
+		return err
 	}
 
 	// Optional device serial number supplied as the third argument.
 	serial := ""
 	if len(args) == 3 {
-		serial = args[2]
+		serial = strings.TrimSpace(args[2])
 	}
 
+	// ctx is cancelled by SIGINT/SIGTERM. Everything that should stop on
+	// Ctrl-C (starting the service, waiting for it, opening the browser)
+	// watches this context.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stopSignals := setupSignalHandler(ctx, cancel)
+	defer stopSignals()
+
 	// adb devices
-	devCnt, err := countConnectedDevices()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	if devCnt < 2 {
-		fmt.Println("Make sure your device is connected")
-		return
-	} else if devCnt > 2 && serial == "" {
-		fmt.Println("Multiple devices connected, please specify the target device serial number")
-		return
+	if err := checkDevices(ctx, serial); err != nil {
+		return err
 	}
 
 	// apk path
-	fullPath, err := locateApkPath(serial)
+	fullPath, err := locateApkPath(ctx, serial)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return err
 	}
 
 	// forward
-	if err := forwardConnection(port, serial); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	if err := forwardConnection(ctx, port, serial); err != nil {
+		return err
 	}
-
-	// Register the SIGINT handler after the forward is established so that
-	// Ctrl-C always tears down the port forward before the process exits.
-	// The handler also interrupts the app_process child so the tool never
-	// blocks waiting on it when the signal was delivered only to us.
-	var svc service
-	stopSignals, signalDone := setupSignalHandler(port, serial, svc.interrupt)
+	// Remove the forward on every exit path: Ctrl-C, service exit, or a
+	// failure below. Cleanup gets its own bounded context because ctx is
+	// already cancelled when we get here after a signal.
+	defer func() {
+		cleanupCtx, cancelCleanup := context.WithTimeout(context.Background(), cleanupTimeout)
+		defer cancelCleanup()
+		unforwardConnection(cleanupCtx, port, serial)
+	}()
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		time.Sleep(browserDelay)
-
+		select {
+		case <-time.After(browserDelay):
+		case <-ctx.Done():
+			return
+		}
 		fmt.Println("Open the browser on the worker goroutine")
-		openBrowser(port, serial)
+		openBrowser(ctx, port, serial)
 	}()
 
-	svc.startAndWait(port, fullPath, serial)
+	serviceErr := startServiceAndWait(ctx, port, fullPath, serial)
 
-	// On a normal (non-SIGINT) exit, stop listening for signals so the handler
-	// goroutine can return without waiting for another signal.
-	stopSignals()
-	<-signalDone
-
+	// Stop the browser goroutine if it is still waiting, then let it finish.
+	cancel()
 	wg.Wait()
+
+	if serviceErr != nil {
+		return serviceErr
+	}
 	fmt.Println("About to quit the app")
+	return nil
 }
 
-// serialCheckedCommand returns an adb *exec.Cmd pre-populated with the
-// "-s <serial>" flag when a device serial number is provided.
-func serialCheckedCommand(serial string, args ...string) *exec.Cmd {
+// parsePort validates that s is a TCP port in the range 1-65535 and returns
+// it in its canonical string form.
+func parsePort(s string) (string, error) {
+	s = strings.TrimSpace(s)
+	n, err := strconv.ParseUint(s, 10, 16)
+	if err != nil || n == 0 {
+		return "", fmt.Errorf("The port must be a number between 1 and 65535, got %q.", s)
+	}
+	return strconv.FormatUint(n, 10), nil
+}
+
+// serialCheckedCommand returns an adb *exec.Cmd bound to ctx and
+// pre-populated with the "-s <serial>" flag when a device serial number is
+// provided.
+func serialCheckedCommand(ctx context.Context, serial string, args ...string) *exec.Cmd {
 	var full []string
 	if serial != "" {
 		full = append(full, "-s", serial)
 	}
 	full = append(full, args...)
-	return exec.Command("adb", full...)
+	return exec.CommandContext(ctx, "adb", full...)
 }
 
-// countConnectedDevices runs "adb devices" and returns the number of lines
-// that contain the word "device" (including the header), which is a proxy for
-// the number of recognised entries.
-func countConnectedDevices() (int, error) {
-	out, err := exec.Command("adb", "devices").Output()
+// deviceEntry is one row of "adb devices": a serial and its state
+// (e.g. "device", "offline", "unauthorized").
+type deviceEntry struct {
+	serial string
+	state  string
+}
+
+// listDevices runs "adb devices" and parses each non-header row into a
+// deviceEntry.
+func listDevices(ctx context.Context) ([]deviceEntry, error) {
+	out, err := exec.CommandContext(ctx, "adb", "devices").Output()
 	if err != nil {
-		return 0, fmt.Errorf("failed to run 'adb devices': %w", err)
+		return nil, fmt.Errorf("failed to run 'adb devices': %w", err)
 	}
 	devicesOut := string(out)
-
 	fmt.Printf("\nDevices info : %s\n", devicesOut)
-	return strings.Count(devicesOut, "device"), nil
+	return parseDevices(devicesOut), nil
+}
+
+// parseDevices turns the output of "adb devices" into one deviceEntry per
+// device row, skipping the header, blank lines and daemon chatter such as
+// "* daemon started successfully".
+func parseDevices(devicesOut string) []deviceEntry {
+	var devices []deviceEntry
+	sc := bufio.NewScanner(strings.NewReader(devicesOut))
+	for sc.Scan() {
+		line := strings.TrimSpace(sc.Text())
+		if line == "" || strings.HasPrefix(line, "List of devices") || strings.HasPrefix(line, "*") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+		devices = append(devices, deviceEntry{serial: fields[0], state: fields[1]})
+	}
+	return devices
+}
+
+// checkDevices verifies that a usable device is attached and that the
+// selection is unambiguous: exactly one ready device, or a serial that names
+// a ready device when several entries are listed.
+func checkDevices(ctx context.Context, serial string) error {
+	devices, err := listDevices(ctx)
+	if err != nil {
+		return err
+	}
+
+	ready := 0
+	for _, d := range devices {
+		if d.state == "device" {
+			ready++
+		}
+	}
+
+	if serial != "" {
+		for _, d := range devices {
+			if d.serial != serial {
+				continue
+			}
+			if d.state != "device" {
+				return fmt.Errorf("Device %s is %s, not ready", serial, d.state)
+			}
+			return nil
+		}
+		return fmt.Errorf("Device %s is not connected", serial)
+	}
+
+	if ready == 0 {
+		return errors.New("Make sure your device is connected")
+	}
+	if len(devices) > 1 {
+		return errors.New("Multiple devices connected, please specify the target device serial number")
+	}
+	return nil
 }
 
 // locateApkPath queries the package manager on the connected device for the
 // APK path of the DroidCast package. It returns the "CLASSPATH=<path>" string
 // on success, or an error when the package is not found.
-func locateApkPath(serial string) (string, error) {
-	cmd := serialCheckedCommand(serial, "shell", "pm", "path", packageName)
+func locateApkPath(ctx context.Context, serial string) (string, error) {
+	cmd := serialCheckedCommand(ctx, serial, "shell", "pm", "path", packageName)
 	var stderr strings.Builder
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
@@ -167,30 +259,17 @@ func locateApkPath(serial string) (string, error) {
 	return fullPath, nil
 }
 
-// service tracks the "adb shell ... app_process" child so that a signal
-// handler can interrupt it from another goroutine.
-type service struct {
-	mu  sync.Mutex
-	cmd *exec.Cmd
-}
-
-// interrupt sends SIGINT to the running app_process child, if any. It is
-// safe to call before the child has started or after it has exited.
-func (s *service) interrupt() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.cmd == nil || s.cmd.Process == nil {
-		return
-	}
-	if err := s.cmd.Process.Signal(os.Interrupt); err != nil && !errors.Is(err, os.ErrProcessDone) {
-		fmt.Fprintf(os.Stderr, "Failed to interrupt app_process: %v\n", err)
-	}
-}
-
-// startAndWait spawns app_process via "adb shell" with the DroidCast main
-// class and waits for the process to finish. The child's stdio is attached to
+// startServiceAndWait spawns app_process via "adb shell" with the DroidCast
+// main class and waits for it to finish. The child's stdio is attached to
 // ours so the service log is visible in the terminal.
-func (s *service) startAndWait(port, fullPath, serial string) {
+//
+// The child is bound to ctx: if ctx is already cancelled the service is not
+// started, and if ctx is cancelled while waiting the child is sent SIGINT
+// (then killed after childWaitDelay if it does not exit).
+//
+// A non-zero exit of the child itself is reported but is not an error, to
+// match script-rs. Only a failure to start or wait on the child is returned.
+func startServiceAndWait(ctx context.Context, port, fullPath, serial string) error {
 	portParam := "--port=" + port
 	params := []string{
 		"shell",
@@ -202,106 +281,100 @@ func (s *service) startAndWait(port, fullPath, serial string) {
 	}
 	fmt.Printf("Params -> %q\n", params)
 
-	cmd := serialCheckedCommand(serial, params...)
+	cmd := serialCheckedCommand(ctx, serial, params...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Cancel = func() error { return cmd.Process.Signal(os.Interrupt) }
+	cmd.WaitDelay = childWaitDelay
 
-	s.mu.Lock()
-	err := cmd.Start()
-	if err == nil {
-		s.cmd = cmd
-	}
-	s.mu.Unlock()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to spawn app_process: %v\n", err)
-		return
+	if err := cmd.Start(); err != nil {
+		if ctx.Err() != nil {
+			// Interrupted before the service was started; nothing to run.
+			return nil
+		}
+		return fmt.Errorf("failed to spawn app_process: %w", err)
 	}
 
+	err := cmd.Wait()
 	var exitErr *exec.ExitError
-	err = cmd.Wait()
 	switch {
-	case err == nil:
+	case err == nil, errors.As(err, &exitErr), ctx.Err() != nil:
+		// Normal exit, a non-zero child status, or our own interrupt: all
+		// are reported status-only like the Rust version does.
 		fmt.Printf("status: %s\n", cmd.ProcessState)
-	case errors.As(err, &exitErr):
-		// A non-zero exit (e.g. the child was interrupted by Ctrl-C) is normal
-		// here; report the status like the Rust version does.
-		fmt.Printf("status: %s\n", exitErr.ProcessState)
+		return nil
 	default:
-		fmt.Fprintf(os.Stderr, "Failed to wait for app_process: %v\n", err)
+		return fmt.Errorf("failed to wait for app_process: %w", err)
 	}
 }
 
 // forwardConnection forwards the local TCP port to the same port on the
 // device using "adb forward".
-func forwardConnection(port, serial string) error {
+func forwardConnection(ctx context.Context, port, serial string) error {
 	grp := "tcp:" + port
 	params := []string{"forward", grp, grp}
 	fmt.Printf("Params -> %q\n", params)
 
-	if _, err := serialCheckedCommand(serial, params...).Output(); err != nil {
+	if _, err := serialCheckedCommand(ctx, serial, params...).Output(); err != nil {
 		return fmt.Errorf("failed to forward the tcp connection: %w", err)
 	}
 	return nil
 }
 
 // unforwardConnection removes the previously established port forward via
-// "adb forward --remove".
-func unforwardConnection(port, serial string) {
+// "adb forward --remove". It never blocks longer than ctx allows.
+func unforwardConnection(ctx context.Context, port, serial string) {
 	tcp := "tcp:" + port
-	cmd := serialCheckedCommand(serial, "forward", "--remove", tcp)
+	cmd := serialCheckedCommand(ctx, serial, "forward", "--remove", tcp)
 
 	err := cmd.Run()
 	var exitErr *exec.ExitError
 	switch {
-	case err == nil:
+	case err == nil, errors.As(err, &exitErr):
 		fmt.Printf("adb unforward action status : %s\n", cmd.ProcessState)
-	case errors.As(err, &exitErr):
-		fmt.Printf("adb unforward action status : %s\n", exitErr.ProcessState)
 	default:
 		fmt.Fprintf(os.Stderr, "Failed to run 'adb forward --remove': %v\n", err)
 	}
 }
 
-// setupSignalHandler installs a SIGINT/SIGTERM handler that removes the
-// active port forward when the user presses Ctrl-C and then calls onSignal
-// (used to interrupt the app_process child). It returns a stop function that
-// unregisters the handler (allowing the goroutine to return on a clean exit)
-// and a channel that is closed once the handler goroutine has finished.
-func setupSignalHandler(port, serial string, onSignal func()) (stop func(), done <-chan struct{}) {
+// setupSignalHandler cancels the lifecycle context when SIGINT or SIGTERM
+// arrives. Cancelling ctx stops the service (or prevents it from starting),
+// aborts the pending browser launch, and lets run's deferred cleanup remove
+// the port forward. After the first signal the handler is unregistered, so
+// a second Ctrl-C falls back to the default action and kills the tool
+// immediately if cleanup is stuck.
+//
+// The returned function unregisters the handler; it is safe to call more
+// than once.
+func setupSignalHandler(ctx context.Context, cancel context.CancelFunc) (stop func()) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 
-	quit := make(chan struct{})
-	finished := make(chan struct{})
+	var once sync.Once
+	stop = func() { once.Do(func() { signal.Stop(sigs) }) }
 
 	go func() {
-		defer close(finished)
 		select {
 		case sig := <-sigs:
 			fmt.Printf("\nReceived signal %v\n", sig)
-			unforwardConnection(port, serial)
-			onSignal()
-		case <-quit:
+			stop()
+			cancel()
+		case <-ctx.Done():
 		}
 	}()
-
-	var once sync.Once
-	stop = func() {
-		once.Do(func() {
-			signal.Stop(sigs)
-			close(quit)
-		})
-	}
-	return stop, finished
+	return stop
 }
 
 // openBrowser retrieves the device's WLAN IP address, prints a shareable URL,
 // and opens a local screenshot URL in the default browser.
-func openBrowser(port, serial string) {
+func openBrowser(ctx context.Context, port, serial string) {
 	ipScript := "ip route | awk '/wlan*/{ print $9 }'| tr -d '\\n'"
-	ipBytes, err := serialCheckedCommand(serial, "shell", ipScript).Output()
+	ipBytes, err := serialCheckedCommand(ctx, serial, "shell", ipScript).Output()
 	if err != nil {
+		if ctx.Err() != nil {
+			return
+		}
 		fmt.Fprintf(os.Stderr, "Failed to retrieve device IP address: %v\n", err)
 	}
 	ip := strings.TrimSpace(string(ipBytes))

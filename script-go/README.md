@@ -31,5 +31,11 @@ Example:
 The tool prints a shareable `http://<device-wlan-ip>:<port>/screenshot` URL,
 opens `http://localhost:<port>/screenshot` in the browser after two seconds,
 and keeps running until the on-device service exits. Press Ctrl-C to stop;
-the port forward is removed and the `app_process` child is interrupted before
-the tool exits.
+the `app_process` child is interrupted and the port forward is removed
+before the tool exits. The forward is also removed when the service exits on
+its own or the tool fails after setting it up. A second Ctrl-C during
+cleanup terminates the tool immediately.
+
+## Test
+
+    go test ./...
